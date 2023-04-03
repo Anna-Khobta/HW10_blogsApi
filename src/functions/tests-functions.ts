@@ -41,7 +41,7 @@ export async function createUser (app: express.Application, auth: {login: string
     return createdResponseUser.body;
 }
 
-export async function loginUserGetToken (app: express.Application) {
+export async function loginUserGetToken (app: express.Application, auth: {login: string, password: string}) {
 
     const tryLogin = await request(app)
         .post('/auth/login')
@@ -74,7 +74,7 @@ export async function deleteAllCreateUser (app: express.Application, auth: {logi
 }
 
 
-export async function loginInSystem (app: express.Application): Promise <string>  {
+export async function loginInSystem (app: express.Application, auth: {login: string, password: string}): Promise <string>  {
 
    const login = await request(app)
         .post('/auth/login')
