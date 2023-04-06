@@ -94,7 +94,7 @@ const confirmationCode = newUser.emailConfirmation.confirmationCode
         await usersRepository.updatePasswordRecoveryCode(foundUserByEmail.id, generatePassRecovCode, generatePassRecovCodeExpirationDate)
 
         const html = `<h1>Password recovery</h1
-       <p>To finish password recovery please follow the link below: <a href="https://somesite.com/confirm-email?code=${generatePassRecovCode}">complete registration</a></p>`
+       <p>To finish password recovery please follow the link below: <a href="https://somesite.com/confirm-email?recoveryCode=${generatePassRecovCode}">complete registration</a></p>`
 
 
 // send mail with defined transport object
