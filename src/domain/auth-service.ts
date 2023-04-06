@@ -23,7 +23,7 @@ export const authService= {
             accountData: {
                 login: login,
                 email: email,
-                password: hashPassword,
+                hashPassword: hashPassword,
                 createdAt: (new Date()).toISOString()
             },
             emailConfirmation: {
@@ -33,7 +33,10 @@ export const authService= {
                     minutes: 2
                 }),
                 isConfirmed: false
-
+            },
+            passwordRecovery: {
+                recoveryCode: null,
+                exp: null
             }
         }
 
@@ -60,15 +63,28 @@ export const authService= {
         let foundUserByEmail = await usersRepository.findUserByEmail(email)
 
         if (!foundUserByEmail) return false
-        if (!foundUserByEmail.emailConfirmation.isConfirmed) {
 
-            await emailsManager.resendEmailConfirmationMessage(foundUserByEmail!)
-
+        try {
+            await emailsManager.sendEmailPasswordRecovery(foundUserByEmail)
             return true
+        } catch (error) {
+            console.log(error)
+            return false
         }
-        return false
-    }
+    },
+
+
+    async updatePassword (newPassword: string, recoveryCode: string): Promise<boolean> {
+
+        const foundUserByCode = await usersRepository.findUserByRecoveryCode(recoveryCode)
+
+        const result = await usersRepository.updatePassword (foundUserByCode!.id, newPassword)
+
+        return result
+
+    },
 }
+
 
 
    /* async loginUser(foundUserInDb:UserType, loginOrEmail: string, password: string): Promise <boolean> {

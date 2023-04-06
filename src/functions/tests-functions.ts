@@ -32,9 +32,9 @@ export async function createUser (app: express.Application, auth: {login: string
         .post('/users')
         .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
         .send({
-            "login": "test123",
+            "login": "khontaav",
             "password": "test123",
-            "email": "test123@mail.com"
+            "email": "khontaav@gmail.com"
         })
         .expect(201)
 

@@ -1,5 +1,5 @@
 import {
-    checkCodeInDb,
+    checkCodeInDb, checkRecoveryCodeInDb,
     checkUserEmailInbase,
     emailValidation, emailValidationSimple,
     loginOrEmailValidation,
@@ -38,7 +38,7 @@ authRouter
             return
         }
 
-        let isPasswordCorrect = await usersService.checkPasswordCorrect(foundUserInDb.accountData.password, req.body.password)
+        let isPasswordCorrect = await usersService.checkPasswordCorrect(foundUserInDb.accountData.hashPassword, req.body.password)
 
         if (!isPasswordCorrect) {
             return res.sendStatus(401) //можно писать и так и как выше
@@ -163,3 +163,34 @@ authRouter
 
         })
 
+    .post("/password-recovery/",
+        limitIpMiddleware,
+        emailValidationSimple,
+        inputValidationMiddleware,
+        async (req:Request, res: Response) => {
+
+            const result = await authService.checkEmail(req.body.email)
+
+            //как-то тут ошибку надо отлавливать же?
+
+            res.sendStatus(204)
+
+        })
+
+
+    .post("/new-password/",
+        limitIpMiddleware,
+        passwordValidation,
+        checkRecoveryCodeInDb,
+        inputValidationMiddleware,
+
+        async (req:Request, res: Response) => {
+
+            const result = await authService.updatePassword(req.body.newPassword, req.body.recoveryCode)
+
+            if (result) {
+                res.sendStatus(204)
+            } else {
+                res.status(400).json({ errorsMessages: [{ message: "Incorrect recoveryCode or it was already used", field: "code" }] })
+            }
+        })

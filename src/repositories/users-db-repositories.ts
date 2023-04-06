@@ -2,6 +2,10 @@ import { usersCollection} from "./db";
 import {SortDirection} from "mongodb";
 import {UserDbType, UserViewWhenAdd} from "./types";
 
+
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(5);
+
 export const usersRepository = {
 
     async checkUser(login: string, email: string): Promise<UserDbType | null> {
@@ -52,6 +56,17 @@ export const usersRepository = {
 
     },
 
+    async findUserByRecoveryCode(recoveryCode: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"passwordRecovery.recoveryCode": recoveryCode}, {projection: {_id: 0, password: 0,}})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },
 
     async checkUserLoginOrEmail(loginOrEmail: string): Promise<UserDbType | null> {
 
@@ -169,7 +184,7 @@ export const usersRepository = {
         return foundUser || null
     },
 
-    async updateConfirmation (id: string): Promise<boolean> {
+    async updateConfirmation(id: string): Promise<boolean> {
         let result = await usersCollection.updateOne({id: id}, {$set: {"emailConfirmation.isConfirmed": true}})
         return result.modifiedCount === 1
     },
@@ -183,11 +198,41 @@ export const usersRepository = {
         return foundUser || null
     },
 
-    async updateConfirmationCode (id: string, generateConfirmationCode:string, generateExpirationDate: Date): Promise<boolean> {
+    async updateConfirmationCode(id: string, generateConfirmationCode: string, generateExpirationDate: Date): Promise<boolean> {
         let result = await usersCollection.updateOne({id: id},
-            {$set: {
-                "emailConfirmation.confirmationCode": generateConfirmationCode,
-                    "emailConfirmation.expirationDate": generateExpirationDate}})
+            {
+                $set: {
+                    "emailConfirmation.confirmationCode": generateConfirmationCode,
+                    "emailConfirmation.expirationDate": generateExpirationDate
+                }
+            })
+        return result.modifiedCount === 1
+    },
+
+    async updatePasswordRecoveryCode(id: string, generatePassRecovCode: string, generatePassRecovCodeExpirationDate: Date): Promise<boolean> {
+        let result = await usersCollection.updateOne({id: id},
+            {
+                $set: {
+                    "passwordRecovery.recoveryCode": generatePassRecovCode,
+                    "passwordRecovery.exp": generatePassRecovCodeExpirationDate
+                }
+            })
+        return result.modifiedCount === 1
+    },
+
+    async updatePassword (id: string, newPassword: string): Promise<boolean> {
+
+        const hashPassword = await bcrypt.hash(newPassword, salt)
+
+        // password hash
+        let result = await usersCollection.updateOne({id: id},
+            {
+                $set: {
+                    "accountData.hashPassword": hashPassword,
+                    "passwordRecovery.recoveryCode": null,
+                    "passwordRecovery.exp": null
+                }
+            })
         return result.modifiedCount === 1
     }
 }

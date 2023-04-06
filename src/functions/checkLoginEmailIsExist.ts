@@ -41,3 +41,12 @@ export const checkCodeInbase = async (code: string) => {
     }
 
 };
+
+export const checkRecoveryCodeInBase = async (recoveryCode: string) => {
+
+    const user = await usersRepository.findUserByRecoveryCode(recoveryCode);
+
+    if (!user || user.passwordRecovery.exp! < new Date()) {
+        return Promise.reject("Incorrect Recovery Code");
+    }
+};

@@ -69,5 +69,42 @@ const confirmationCode = newUser.emailConfirmation.confirmationCode
         // html body
 
         return info
+    },
+
+
+    async sendEmailPasswordRecovery (foundUserByEmail: UserDbType) {
+
+        const myPass = process.env.EMAIL
+
+// create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: "menthol.vegan@gmail.com", // generated ethereal user
+                pass: myPass, // generated ethereal password
+            },
+        });
+
+        const generatePassRecovCode = uuidv4()
+        const generatePassRecovCodeExpirationDate = add(new Date(), {
+            hours: 1,
+            minutes: 2
+        })
+
+        await usersRepository.updatePasswordRecoveryCode(foundUserByEmail.id, generatePassRecovCode, generatePassRecovCodeExpirationDate)
+
+        const html = `<h1>Password recovery</h1
+       <p>To finish password recovery please follow the link below: <a href="https://somesite.com/confirm-email?code=${generatePassRecovCode}">complete registration</a></p>`
+
+
+// send mail with defined transport object
+        let info = await transporter.sendMail({
+            from: "AnnaTestEmail",  // sender address
+            to: foundUserByEmail.accountData.email, // list of receivers
+            subject: "Password Recovery Message", // Subject line
+            html: html })
+        // html body
+
+        return info
     }
 }

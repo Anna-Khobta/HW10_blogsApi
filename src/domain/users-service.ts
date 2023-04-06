@@ -18,14 +18,18 @@ export const usersService= {
             accountData: {
             login: login,
                 email: email,
-                password: hashPassword,
+                hashPassword: hashPassword,
                 createdAt: (new Date()).toISOString()
         },
         emailConfirmation: {
             confirmationCode: uuidv4(),
                 expirationDate: new Date(),
                 isConfirmed: true
-        }
+        },
+            passwordRecovery: {
+                recoveryCode: null,
+                exp: null
+            }
     }
 
 

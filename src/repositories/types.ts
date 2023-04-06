@@ -58,13 +58,18 @@ export type UserDbType = {
     accountData: {
         login: string,
         email: string,
-        password: string,
+        hashPassword: string,
         createdAt: string
     },
     emailConfirmation: {
         confirmationCode: string,
         expirationDate: Date,
         isConfirmed: boolean
+    },
+    passwordRecovery: {
+        recoveryCode: string | null,
+        exp: Date | null
+
     }
 }
 
