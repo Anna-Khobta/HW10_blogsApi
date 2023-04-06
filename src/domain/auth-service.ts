@@ -73,6 +73,20 @@ export const authService= {
         }
     },
 
+    async checkEmailPassRecov (email: string): Promise<boolean> {
+        let foundUserByEmail = await usersRepository.findUserByEmail(email)
+
+        if (!foundUserByEmail) return true
+
+        try {
+            await emailsManager.sendEmailPasswordRecovery(foundUserByEmail)
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    },
+
 
     async updatePassword (newPassword: string, recoveryCode: string): Promise<boolean> {
 

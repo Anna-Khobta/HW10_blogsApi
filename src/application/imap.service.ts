@@ -1,9 +1,6 @@
 import { simpleParser } from 'mailparser';
-
 // @ts-ignore
 import ImapClient from 'emailjs-imap-client';
-import {log} from "util";
-import {tr} from "date-fns/locale";
 
 
 const myPassTest = process.env.EMAIL_TEST

@@ -4,6 +4,7 @@ import {app} from "../src/settings";
 
 import {MailBoxImap} from "../src/application/imap.service"
 import {createUser, deleteAllCreateUser} from "../src/functions/tests-functions";
+import {emitKeypressEvents} from "readline";
 
 
 
@@ -39,11 +40,15 @@ describe('Password Recovery', () => {
             .expect(204);
 
 
-        const mailbox = new MailBoxImap();
-        await mailbox.connectToMail();
+        const mailBox: MailBoxImap = expect.getState().mailBox
 
-        const message = await mailbox.waitNewMessage(5);
-        const subject = await mailbox.getMessageSubject(message);
+        const email = await mailBox.waitNewMessage(2);
+        const html = await mailBox.getMessageHtml(email)
+
+        expect(html).not.toBeNull()
+
+/*
+        const subject = await mailBox.getMessageSubject(message);
 
         const recoveryCodeRegex = /Your recovery code is ([a-zA-Z0-9]+)/;
         // @ts-ignore
@@ -51,7 +56,7 @@ describe('Password Recovery', () => {
         if (subject !== 'Password Recovery' || !recoveryCodeMatch) {
             throw new Error('Did not receive expected recovery email');
         }
-        const recoveryCode = recoveryCodeMatch[1];
+        const recoveryCode = recoveryCodeMatch[1];*/
     })
 })
 

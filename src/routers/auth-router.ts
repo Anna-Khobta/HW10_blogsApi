@@ -169,11 +169,13 @@ authRouter
         inputValidationMiddleware,
         async (req:Request, res: Response) => {
 
-            const result = await authService.checkEmail(req.body.email)
+            const result = await authService.checkEmailPassRecov(req.body.email)
 
-            //как-то тут ошибку надо отлавливать же?
-
-            res.sendStatus(204)
+            if (!result) {
+                return res.sendStatus(400)
+            } else {
+                return res.sendStatus(204)
+            }
 
         })
 
