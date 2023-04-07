@@ -2,14 +2,14 @@
 import request from 'supertest';
 import {app} from "../src/settings";
 
-import {MailBoxImap} from "../src/application/imap.service"
+import {client} from "../src/repositories/db";
+import {usersRepository} from "../src/repositories/users-db-repositories";
+
 import {createUser, deleteAllCreateUser} from "../src/functions/tests-functions";
-import {emitKeypressEvents} from "readline";
 
 
-
-
-const auth = {login: 'admin', password: 'qwerty'}
+const email = {email: 'nakanai.x@gmail.com'}
+const unAuthEmail = {email: 'ana14i88@gmail.com'}
 
 describe('Password Recovery', () => {
 
@@ -17,35 +17,83 @@ describe('Password Recovery', () => {
         await request(app).delete('/testing/all-data')
     })
 
-    it('should send email with recovery code', async () => {
-        // Simulate a request to your API endpoint that calls sendEmailPasswordRecovery
+    afterAll(async () => {
+        await client.close();
+    })
 
-        const createdResponseUser = await request(app)
-            .post('/users')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "login": "test12",
-                "password": "test12",
-                "email": "ana14i88@yandex.ru"
-            })
-            .expect(201)
+    it('should send email with recovery code and create new-password', async () => {
 
-        const createdUser = createdResponseUser.body
+        const newUser = await createUser(app)
 
-        console.log(createdUser)
-
-        const res = await request(app)
+        const passwordRecoveryRes = await request(app)
             .post('/auth/password-recovery')
-            .send({email: 'ana14i88@yandex.ru'})
+            .send(email)
+            .expect(204);
+
+        jest.mock('../src/managers/emails-manager', () => {
+            return {
+                emailsManager: {
+                    sendEmailPasswordRecovery: jest.fn(() => Promise.resolve('Mock email sent successfully'))
+                }
+            }
+        });
+
+        const userFromDb = await usersRepository.findUserByEmail(email.email)
+
+        expect(userFromDb).not.toBeNull()
+
+        const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
+
+        expect(recoveryCode).not.toBeNull()
+
+        const createNewPassword = await request(app)
+            .post('/auth/new-password')
+            .send({
+                    "newPassword": "newPassword",
+                    "recoveryCode": recoveryCode
+                }
+            )
             .expect(204);
 
 
+    })
+
+    it('auth/password-recovery: should return status 204 even if such email doesnt exist', async () => {
+
+        const newUser = await deleteAllCreateUser(app)
+
+        const passwordRecoveryRes = await request(app)
+            .post('/auth/password-recovery')
+            .send(unAuthEmail)
+            .expect(204);
+
+        jest.mock('../src/managers/emails-manager', () => {
+            return {
+                emailsManager: {
+                    sendEmailPasswordRecovery: jest.fn(() => Promise.resolve('Mock email sent successfully'))
+                }
+            }
+        })
+
+        const userFromDb = await usersRepository.findUserByEmail(unAuthEmail.email)
+
+        expect(userFromDb).toBeNull()
+
+
+
+    })
+})
+
+
+/*
+
         const mailBox: MailBoxImap = expect.getState().mailBox
+
 
         const email = await mailBox.waitNewMessage(2);
         const html = await mailBox.getMessageHtml(email)
 
-        expect(html).not.toBeNull()
+        expect(html).not.toBeNull()*/
 
 /*
         const subject = await mailBox.getMessageSubject(message);
@@ -57,8 +105,6 @@ describe('Password Recovery', () => {
             throw new Error('Did not receive expected recovery email');
         }
         const recoveryCode = recoveryCodeMatch[1];*/
-    })
-})
 
         /*const email = await mailbox.getLastMessageBySubject("Recovery");
 

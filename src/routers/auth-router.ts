@@ -3,7 +3,7 @@ import {
     checkUserEmailInbase,
     emailValidation, emailValidationSimple,
     loginOrEmailValidation,
-    loginValidation,
+    loginValidation, newPasswordValidation,
     passwordValidation
 } from "../middlewares/authentication";
 import {inputValidationMiddleware} from "../middlewares/input-validation-middleware";
@@ -182,7 +182,7 @@ authRouter
 
     .post("/new-password/",
         limitIpMiddleware,
-        passwordValidation,
+        newPasswordValidation,
         checkRecoveryCodeInDb,
         inputValidationMiddleware,
 

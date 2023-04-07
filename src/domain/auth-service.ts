@@ -65,7 +65,7 @@ export const authService= {
         if (!foundUserByEmail) return false
 
         try {
-            await emailsManager.sendEmailPasswordRecovery(foundUserByEmail)
+            await emailsManager.resendEmailConfirmationMessage(foundUserByEmail)
             return true
         } catch (error) {
             console.log(error)
@@ -78,8 +78,16 @@ export const authService= {
 
         if (!foundUserByEmail) return true
 
+        const generatePassRecovCode = uuidv4()
+        const generatePassRecovCodeExpirationDate = add(new Date(), {
+            hours: 1,
+            minutes: 2
+        })
+
+        await usersRepository.updatePasswordRecoveryCode(foundUserByEmail.id, generatePassRecovCode, generatePassRecovCodeExpirationDate)
+
         try {
-            await emailsManager.sendEmailPasswordRecovery(foundUserByEmail)
+            await emailsManager.sendEmailPasswordRecovery(generatePassRecovCode, email)
             return true
         } catch (error) {
             console.log(error)

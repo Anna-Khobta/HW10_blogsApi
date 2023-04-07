@@ -2,12 +2,11 @@ import {app} from "../src/settings";
 import request from "supertest"
 import {deleteAllCreateUser, loginInSystem} from "../src/functions/tests-functions";
 import jwt from "jsonwebtoken";
+import {auth, basicAuth, userLoginPassEmail} from "../src/functions/tests-objects";
 
 
 
-const auth = {login: 'admin', password: 'qwerty'}
-
-describe.skip('/', () => {
+describe('/', () => {
 
     beforeAll(async () => {
         await request(app).delete('/testing/all-data')
@@ -18,12 +17,8 @@ describe.skip('/', () => {
 
         const createdResponseUser = await request(app)
             .post('/users')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "login": "test12",
-                "password": "test12",
-                "email": "test12@mail.com"
-            })
+            .set('Authorization', basicAuth)
+            .send(userLoginPassEmail)
             .expect(201)
 
         const createdUser = createdResponseUser.body
@@ -42,7 +37,7 @@ describe.skip('/', () => {
 
         const getUser = await request(app)
             .get('/users/' + '?'+ 'sortDirection=asc'+ '&pageSize=20'+ '&page=1')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
+            .set('Authorization', basicAuth)
             .expect(200, {
                 "pagesCount": 1,
                 "page": 1,
@@ -134,13 +129,11 @@ describe('/', () => {
 
         const createdUser = await request(app)
             .post('/users')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "login": "Anna12",
-                "password": "Anna12",
-                "email": "Anna12@mail.com"
-            })
+            .set('Authorization', basicAuth)
+            .send(userLoginPassEmail)
             .expect(201)
+
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         const browsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
@@ -237,11 +230,7 @@ describe('/', () => {
             requests.push(
                 request(app)
                     .post("/auth/registration/")
-                    .send({
-                        "login": "Anna12",
-                        "password": "Anna12",
-                        "email": "Anna12@mail.com"
-                    })
+                    .send(userLoginPassEmail)
             );
         }
 
@@ -257,11 +246,7 @@ describe('/', () => {
 
         const registrationRes = await request(app)
             .post("/auth/registration/")
-            .send({
-                "login": "Anna123",
-                "password": "Anna123",
-                "email": "Anna123@mail.com"
-            })
+            .send(userLoginPassEmail)
             .expect(204)
 
 

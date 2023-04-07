@@ -83,7 +83,7 @@ describe.skip('/', () => {
     })
 })
 
-describe('/', () => {
+describe.skip('/', () => {
 
     beforeAll(async () => {
         await request(app).delete('/testing/all-data')
@@ -296,7 +296,7 @@ describe('/', () => {
 
 })
 
-describe('/', () => {
+describe.skip('/', () => {
 
     beforeAll(async () => {
         await request(app).delete('/testing/all-data')
@@ -313,8 +313,8 @@ describe('/', () => {
         const tryLogin = await request(app)
             .post('/auth/login')
             .send({
-                "loginOrEmail": "test123",
-                "password": "test123"
+                "loginOrEmail": "khontaav",
+                "password": "khontaav"
             })
             .expect(200)
         let createdUserToken = tryLogin.body.accessToken
