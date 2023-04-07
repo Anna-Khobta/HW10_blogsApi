@@ -1,8 +1,8 @@
 import {app} from "../src/settings";
 import request from "supertest"
-import {deleteAllCreateUser, loginInSystem} from "../src/functions/tests-functions";
+import {deleteAllCreateUser, loginInSystem, loginInSystem2} from "../src/functions/tests-functions";
 import jwt from "jsonwebtoken";
-import {auth, basicAuth, userLoginPassEmail} from "../src/functions/tests-objects";
+import {auth, basicAuth, loginOrEmailPassw, userLoginPassEmail} from "../src/functions/tests-objects";
 
 
 
@@ -50,17 +50,13 @@ describe('/', () => {
         it('GET -> "/security/devices": login user 1 time, then get device list; status 200; content: device list;' +
             'used additional methods: POST => /auth/login ', async () => {
 
-            const loginInSystem = await request(app)
-                .post('/auth/login')
-                .send({
-                    "loginOrEmail": "test12",
-                    "password": "test12"
-                })
-                .expect(200)
+            const login = await loginInSystem2(loginOrEmailPassw)
 
-            const myCookies = loginInSystem.headers['set-cookie'][0]
+                expect(login.status).toBe(200)
 
-            expect(loginInSystem.body).toMatchObject({
+            const myCookies = login.headers['set-cookie'][0]
+
+            expect(login.body).toMatchObject({
                 "accessToken": expect.any(String)
             });
 
@@ -177,8 +173,8 @@ describe('/', () => {
 
         it('POST -> "/auth/refresh-token": should return new refresh and access tokens; status 200', async () => {
 
-            const newUser = await deleteAllCreateUser(app,auth)
-            const loginCookies = await loginInSystem(app, auth)
+            const newUser = await deleteAllCreateUser()
+            const loginCookies = await loginInSystem(app)
 
             const generateTokensRes = await request(app)
                 .post("/auth/refresh-token")

@@ -5,11 +5,20 @@ import {app} from "../src/settings";
 import {client} from "../src/repositories/db";
 import {usersRepository} from "../src/repositories/users-db-repositories";
 
-import {createUser, deleteAllCreateUser} from "../src/functions/tests-functions";
-
-
-const email = {email: 'nakanai.x@gmail.com'}
-const unAuthEmail = {email: 'ana14i88@gmail.com'}
+import {
+    createNewPassword,
+    createUser,
+    deleteAllCreateUser,
+    loginInSystem2,
+    passwordRecovery
+} from "../src/functions/tests-functions";
+import {
+    email,
+    loginOrEmailPassw,
+    newPassword,
+    unregisteredEmail,
+    userLoginPassEmail
+} from "../src/functions/tests-objects";
 
 describe('Password Recovery', () => {
 
@@ -60,63 +69,37 @@ describe('Password Recovery', () => {
 
     it('auth/password-recovery: should return status 204 even if such email doesnt exist', async () => {
 
-        const newUser = await deleteAllCreateUser(app)
+        const newUser = await deleteAllCreateUser()
 
-        const passwordRecoveryRes = await request(app)
-            .post('/auth/password-recovery')
-            .send(unAuthEmail)
-            .expect(204);
+        const passwordRecoveryRes = await passwordRecovery(unregisteredEmail)
 
-        jest.mock('../src/managers/emails-manager', () => {
-            return {
-                emailsManager: {
-                    sendEmailPasswordRecovery: jest.fn(() => Promise.resolve('Mock email sent successfully'))
-                }
-            }
-        })
+        expect(passwordRecoveryRes.status).toBe(204)
 
-        const userFromDb = await usersRepository.findUserByEmail(unAuthEmail.email)
+        const userFromDb = await usersRepository.findUserByEmail(unregisteredEmail.email)
 
         expect(userFromDb).toBeNull()
 
+    })
+
+    it('POST -> "/auth/login": status 401 if try to login with old password', async () => {
+
+        const newUser = await deleteAllCreateUser()
+
+        const passwordRecoveryRes = await passwordRecovery(email)
+
+        const userFromDb = await usersRepository.findUserByEmail(email.email)
+        expect(userFromDb).not.toBeNull()
+
+        const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
+        expect(recoveryCode).not.toBeNull()
+
+        const resOldPassword = await createNewPassword(newPassword, recoveryCode!)
+
+        const login = await loginInSystem2(loginOrEmailPassw)
+
+        expect(login.status).toBe(401)
 
 
     })
+
 })
-
-
-/*
-
-        const mailBox: MailBoxImap = expect.getState().mailBox
-
-
-        const email = await mailBox.waitNewMessage(2);
-        const html = await mailBox.getMessageHtml(email)
-
-        expect(html).not.toBeNull()*/
-
-/*
-        const subject = await mailBox.getMessageSubject(message);
-
-        const recoveryCodeRegex = /Your recovery code is ([a-zA-Z0-9]+)/;
-        // @ts-ignore
-        const recoveryCodeMatch = recoveryCodeRegex.exec(await mailbox.getMessageHtml(message));
-        if (subject !== 'Password Recovery' || !recoveryCodeMatch) {
-            throw new Error('Did not receive expected recovery email');
-        }
-        const recoveryCode = recoveryCodeMatch[1];*/
-
-        /*const email = await mailbox.getLastMessageBySubject("Recovery");
-
-         console.log(email)*/
-
-        /*const recoveryCode = /code=(.*)/.exec(email.html)[1]
-
-        // Assert that the recovery code is a string
-        expect(typeof recoveryCode).toBe('string');
-
-        // Assert that the recovery code matches the one in the response
-        expect(recoveryCode).toBe(res.body.code);*/
-/*
-    });
-});*/

@@ -1,6 +1,7 @@
 import express from "express";
 import request from "supertest";
-import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw, userLoginPassEmail} from "./tests-objects";
+import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw, unregisteredEmail, userLoginPassEmail} from "./tests-objects";
+import {app} from "../settings";
 
 
 export async function createPostWithBlog (app: express.Application, auth: {login: string, password: string})
@@ -46,7 +47,7 @@ export async function loginUserGetToken (app: express.Application, auth: {login:
     return tryLogin.body.accessToken
 }
 
-export async function deleteAllCreateUser (app: express.Application) {
+export async function deleteAllCreateUser () {
 
     const deleteAll = await request(app)
         .delete('/testing/all-data')
@@ -62,7 +63,7 @@ export async function deleteAllCreateUser (app: express.Application) {
 }
 
 
-export async function loginInSystem (app: express.Application, auth: {login: string, password: string}): Promise <string>  {
+export async function loginInSystem (app: express.Application): Promise <string>  {
 
    const login = await request(app)
         .post('/auth/login')
@@ -80,3 +81,29 @@ export async function loginInSystem (app: express.Application, auth: {login: str
     return myCookies
 }
 
+export const passwordRecovery = async (email: any) => {
+    return request(app)
+        .post('/auth/password-recovery')
+        .send(email)
+}
+
+const newPassword = "newPassword"
+
+export const createNewPassword = async (password: string, recoveryCode: string) => {
+
+    return request(app)
+        .post('/auth/new-password')
+        .send({
+                "newPassword": password,
+                "recoveryCode": recoveryCode
+            }
+        )
+}
+
+
+export const loginInSystem2 = async (loginOrEmailPassw: any) => {
+
+    return request(app)
+        .post('/auth/login')
+        .send(loginOrEmailPassw)
+}
