@@ -2,6 +2,37 @@ import express from "express";
 import request from "supertest";
 import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw, unregisteredEmail, userLoginPassEmail} from "./tests-objects";
 import {app} from "../settings";
+import {body} from "express-validator";
+
+export async function createUser (login:string, password: string, email: string, basicAuth: string) {
+    return request(app)
+        .post('/users')
+        .set('Authorization', basicAuth)
+        .send({    "login": login,
+            "password": password,
+            "email": email})
+}
+
+
+export const getUsersWithPagination = async (sortBy:string|null, sortDirection: string|null, pageNumber: string|null, pageSize: string|null, searchLoginTerm:string|null, searchEmailTerm:string|null) => {
+
+    return request(app)
+    .get('/users/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize + '&'+ searchLoginTerm + '&'+ searchEmailTerm)
+    .set('Authorization', basicAuth)
+}
+
+export const getAllUserDevices = async (cookies: any) => {
+    return  request(app)
+        .get("/security/devices")
+        .set('Cookie', cookies)
+}
+
+export const deleteByDeviceId = async (deviceId: string|null|number, cookies:any) => {
+    return request(app)
+        .delete("/security/devices/" + deviceId)
+        .set('Cookie', cookies)
+
+}
 
 
 export async function createPostWithBlog (app: express.Application, auth: {login: string, password: string})
@@ -27,15 +58,6 @@ export async function createPostWithBlog (app: express.Application, auth: {login
     return createdResponsePost.body;
 }
 
-export async function createUser (app: express.Application) {
-    const createdResponseUser = await request(app)
-        .post('/users')
-        .set('Authorization', basicAuth)
-        .send(userLoginPassEmail)
-        .expect(201)
-
-    return createdResponseUser.body;
-}
 
 export async function loginUserGetToken (app: express.Application, auth: {login: string, password: string}) {
 
@@ -47,23 +69,31 @@ export async function loginUserGetToken (app: express.Application, auth: {login:
     return tryLogin.body.accessToken
 }
 
-export async function deleteAllCreateUser () {
+export const authRegistarion = (login:string, password: string, email: string) => {
+    return request(app)
+        .post("/auth/registration/")
+        .send(    {"login": login,
+        "password": password,
+        "email": email})
+}
+
+
+export async function deleteAllCreateUser (login:string, password: string, email: string, basicAuth: string) {
 
     const deleteAll = await request(app)
         .delete('/testing/all-data')
         .expect(204)
 
-    const createdUser = await request(app)
+    return request(app)
         .post('/users')
         .set('Authorization', basicAuth)
-        .send(userLoginPassEmail)
-        .expect(201)
-
-    return createdUser.body
+        .send({    "login": login,
+            "password": password,
+            "email": email})
 }
 
 
-export async function loginInSystem (app: express.Application): Promise <string>  {
+export async function loginInSystem3 (app: express.Application): Promise <string>  {
 
    const login = await request(app)
         .post('/auth/login')
@@ -81,15 +111,21 @@ export async function loginInSystem (app: express.Application): Promise <string>
     return myCookies
 }
 
+export const authRefreshToken = (refreshToken: string) => {
+    return request(app)
+        .post("/auth/refresh-token")
+        .set('Cookie', refreshToken)
+}
+
 export const passwordRecovery = async (email: any) => {
     return request(app)
         .post('/auth/password-recovery')
-        .send(email)
+        .send({email: email})
 }
 
 const newPassword = "newPassword"
 
-export const createNewPassword = async (password: string, recoveryCode: string) => {
+export const createNewPassword = async (password: any, recoveryCode: any) => {
 
     return request(app)
         .post('/auth/new-password')
@@ -101,9 +137,39 @@ export const createNewPassword = async (password: string, recoveryCode: string) 
 }
 
 
-export const loginInSystem2 = async (loginOrEmailPassw: any) => {
+export const loginInSystem = async (loginOrEmail: any, password: any) => {
 
     return request(app)
         .post('/auth/login')
-        .send(loginOrEmailPassw)
+        .send({
+            "loginOrEmail": loginOrEmail,
+            "password": password
+        })
+}
+
+export const fiveRequests = async (url: string, someBody: any) => {
+
+    const maxRequests = 5;
+    const requests = [];
+
+    // Send more than `maxRequests` requests within `interval` time
+    for (let i = 0; i <= maxRequests; i++) {
+        requests.push(
+            request(app)
+                .post(url)
+                .send(someBody)
+        );
+    }
+
+    // Wait for all requests to complete
+    const responses = await Promise.all(requests);
+
+    return responses[maxRequests].status
+}
+
+export const waitSomeSeconds = async (seconds: number) => {
+
+    const interval = seconds * 1000; // in milliseconds
+    await new Promise(resolve => setTimeout(resolve, interval));
+
 }

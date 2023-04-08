@@ -8,16 +8,13 @@ import {usersRepository} from "../src/repositories/users-db-repositories";
 import {
     createNewPassword,
     createUser,
-    deleteAllCreateUser,
-    loginInSystem2,
-    passwordRecovery
+    deleteAllCreateUser, fiveRequests, loginInSystem,
+    passwordRecovery, waitSomeSeconds
 } from "../src/functions/tests-functions";
 import {
-    email,
-    loginOrEmailPassw,
-    newPassword,
-    unregisteredEmail,
-    userLoginPassEmail
+    basicAuth,
+    email, myEmail, myLogin, myPassword,
+    newPassword, secondEmail
 } from "../src/functions/tests-objects";
 
 describe('Password Recovery', () => {
@@ -30,14 +27,13 @@ describe('Password Recovery', () => {
         await client.close();
     })
 
-    it('should send email with recovery code and create new-password', async () => {
+    /*beforeEach(async () => {
+        await request(app).delete('/testing/all-data')
+    })*/
 
-        const newUser = await createUser(app)
+    it('/auth/new-password, create new password, all ok, status 204', async () => {
 
-        const passwordRecoveryRes = await request(app)
-            .post('/auth/password-recovery')
-            .send(email)
-            .expect(204);
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
 
         jest.mock('../src/managers/emails-manager', () => {
             return {
@@ -47,58 +43,124 @@ describe('Password Recovery', () => {
             }
         });
 
-        const userFromDb = await usersRepository.findUserByEmail(email.email)
+        const sendPasswordRecovery = await passwordRecovery(myEmail)
+        expect(sendPasswordRecovery.status).toBe(204)
 
+        const userFromDb = await usersRepository.findUserByEmail(email.email)
         expect(userFromDb).not.toBeNull()
 
         const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
-
         expect(recoveryCode).not.toBeNull()
 
-        const createNewPassword = await request(app)
-            .post('/auth/new-password')
-            .send({
-                    "newPassword": "newPassword",
-                    "recoveryCode": recoveryCode
-                }
-            )
-            .expect(204);
-
+        const authNewPassword = await createNewPassword(newPassword, recoveryCode)
+        expect(authNewPassword.status).toBe(204)
 
     })
 
-    it('auth/password-recovery: should return status 204 even if such email doesnt exist', async () => {
+    it('auth/password-recovery, status 204 even if such email doesnt exist', async () => {
 
-        const newUser = await deleteAllCreateUser()
+        const sendPasswordRecovery = await passwordRecovery(secondEmail)
+        expect(sendPasswordRecovery.status).toBe(204)
 
-        const passwordRecoveryRes = await passwordRecovery(unregisteredEmail)
-
-        expect(passwordRecoveryRes.status).toBe(204)
-
-        const userFromDb = await usersRepository.findUserByEmail(unregisteredEmail.email)
-
+        const userFromDb = await usersRepository.findUserByEmail(secondEmail)
         expect(userFromDb).toBeNull()
 
     })
 
-    it('POST -> "/auth/login": status 401 if try to login with old password', async () => {
+    it('/auth/login, status 401 if try to login with old password', async () => {
 
-        const newUser = await deleteAllCreateUser()
+        const sendPasswordRecovery = await passwordRecovery(myEmail)
 
-        const passwordRecoveryRes = await passwordRecovery(email)
-
-        const userFromDb = await usersRepository.findUserByEmail(email.email)
+        const userFromDb = await usersRepository.findUserByEmail(myEmail)
         expect(userFromDb).not.toBeNull()
 
         const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
         expect(recoveryCode).not.toBeNull()
 
-        const resOldPassword = await createNewPassword(newPassword, recoveryCode!)
+        const sendNewPassword = await createNewPassword(newPassword, recoveryCode!)
+        expect(sendNewPassword.status).toBe(204)
 
-        const login = await loginInSystem2(loginOrEmailPassw)
-
+        const login = await loginInSystem(myEmail, myPassword)
         expect(login.status).toBe(401)
 
+    })
+
+
+    it('/auth/login should sign in user with new password; status 200; content: JWT token', async () => {
+
+        const login = await loginInSystem(myEmail, newPassword)
+        expect(login.status).toBe(200)
+
+        const myCookies = login.headers['set-cookie'][0]
+
+        expect(login.body).toMatchObject({
+            "accessToken": expect.any(String)
+        });
+
+        expect(myCookies).toBeDefined()
+
+    })
+
+    it('auth/new-password: should return error if password is incorrect; status 400;', async () => {
+
+        //const newUser = await deleteAllCreateUser(myLogin, myPassword, myEmail, basicAuth)
+
+        const sendPasswordRecovery = await passwordRecovery(myEmail)
+
+        const userFromDb = await usersRepository.findUserByEmail(myEmail)
+        expect(userFromDb).not.toBeNull()
+
+        const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
+        expect(recoveryCode).not.toBeNull()
+
+        const sendNewPassword = await createNewPassword(" ", recoveryCode!)
+        expect(sendNewPassword.status).toBe(400)
+
+    })
+
+    it('auth/password-recovery, status 429 if more than 5 requests were sent within 10 seconds, and 204 after waiting;', async () => {
+
+        const send5Requests = await fiveRequests ("/auth/password-recovery/", {email: myEmail})
+
+        // Check that the last request was rate-limited
+        expect(send5Requests).toBe(429);
+
+        const wait = await waitSomeSeconds(10)
+
+        const sendPasswordRecovery = await passwordRecovery(myEmail)
+        expect(sendPasswordRecovery.status).toBe(204)
+
+    })
+
+    it('auth/new-password, status 429 if more than 5 requests were sent within 10 seconds, and 204 after waiting;', async () => {
+
+        const newUser = await deleteAllCreateUser(myLogin, myPassword, myEmail, basicAuth)
+
+        const sendPasswordRecovery = await passwordRecovery(myEmail)
+
+        const userFromDb = await usersRepository.findUserByEmail(myEmail)
+        expect(userFromDb).not.toBeNull()
+
+        const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
+        expect(recoveryCode).not.toBeNull()
+
+        const send5Requests = await fiveRequests ("/auth/new-password/", {newPassword: myPassword, recoveryCode: recoveryCode})
+
+        // Check that the last request was rate-limited
+        expect(send5Requests).toBe(429);
+
+        const wait = await waitSomeSeconds(8)
+
+        const sendPasswordRecovery2 = await passwordRecovery(myEmail)
+
+        const userFromDb2 = await usersRepository.findUserByEmail(myEmail)
+        expect(userFromDb2).not.toBeNull()
+
+        const recoveryCode2 = userFromDb2!.passwordRecovery.recoveryCode
+        expect(recoveryCode2).not.toBeNull()
+
+        const sendNewPassword = await createNewPassword("\"myPassword\"+1", recoveryCode2!)
+        expect(sendNewPassword.status).toBe(204)
 
     })
 
