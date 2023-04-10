@@ -2,7 +2,29 @@ import express from "express";
 import request from "supertest";
 import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw, unregisteredEmail, userLoginPassEmail} from "./tests-objects";
 import {app} from "../settings";
-import {body} from "express-validator";
+
+
+
+// 🌺🌺🌺 BLOGS
+
+export const createBlog = async (blogName: string, blogDescription: string, blogUrl: string) => {
+
+    return request(app)
+        .post('/blogs')
+        .set('Authorization', basicAuth)
+        .send({
+            "name": blogName,
+            "description": blogDescription,
+            "websiteUrl": blogUrl
+    })
+}
+
+
+
+
+
+
+// 🌺🌺🌺 USERS
 
 export async function createUser (login:string, password: string, email: string, basicAuth: string) {
     return request(app)
@@ -13,13 +35,28 @@ export async function createUser (login:string, password: string, email: string,
             "email": email})
 }
 
-
 export const getUsersWithPagination = async (sortBy:string|null, sortDirection: string|null, pageNumber: string|null, pageSize: string|null, searchLoginTerm:string|null, searchEmailTerm:string|null) => {
 
     return request(app)
     .get('/users/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize + '&'+ searchLoginTerm + '&'+ searchEmailTerm)
     .set('Authorization', basicAuth)
 }
+
+export async function deleteAllCreateUser (login:string, password: string, email: string, basicAuth: string) {
+
+    const deleteAll = await request(app)
+        .delete('/testing/all-data')
+        .expect(204)
+
+    return request(app)
+        .post('/users')
+        .set('Authorization', basicAuth)
+        .send({    "login": login,
+            "password": password,
+            "email": email})
+}
+
+// 🌺🌺🌺 DEVICES
 
 export const getAllUserDevices = async (cookies: any) => {
     return  request(app)
@@ -31,9 +68,10 @@ export const deleteByDeviceId = async (deviceId: string|null|number, cookies:any
     return request(app)
         .delete("/security/devices/" + deviceId)
         .set('Cookie', cookies)
-
 }
 
+
+// 🌺🌺🌺 POSTS
 
 export async function createPostWithBlog (app: express.Application, auth: {login: string, password: string})
 {
@@ -58,6 +96,7 @@ export async function createPostWithBlog (app: express.Application, auth: {login
     return createdResponsePost.body;
 }
 
+// 🌺🌺🌺 AUTH
 
 export async function loginUserGetToken (app: express.Application, auth: {login: string, password: string}) {
 
@@ -75,21 +114,6 @@ export const authRegistarion = (login:string, password: string, email: string) =
         .send(    {"login": login,
         "password": password,
         "email": email})
-}
-
-
-export async function deleteAllCreateUser (login:string, password: string, email: string, basicAuth: string) {
-
-    const deleteAll = await request(app)
-        .delete('/testing/all-data')
-        .expect(204)
-
-    return request(app)
-        .post('/users')
-        .set('Authorization', basicAuth)
-        .send({    "login": login,
-            "password": password,
-            "email": email})
 }
 
 
@@ -146,6 +170,11 @@ export const loginInSystem = async (loginOrEmail: any, password: any) => {
             "password": password
         })
 }
+
+
+
+
+// 🌺🌺🌺 OTHER
 
 export const fiveRequests = async (url: string, someBody: any) => {
 

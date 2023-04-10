@@ -2,6 +2,11 @@
 export const auth = {login: 'admin', password: 'qwerty'}
 export const basicAuth = "Basic YWRtaW46cXdlcnR5"
 
+export const blogName = "AnnaBlog"
+export const blogDescription = "AnnaBlog Description"
+export const blogUrl = "annablog.com"
+
+
 export const myLogin = "nakanai"
 export const secondLogin = "nakanai1"
 export const myPassword = "nakanai"
@@ -14,7 +19,6 @@ export const fourBrowsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb
     'Mozilla/6.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36',
     'Mozilla/7.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
     'Mozilla/8.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36'];
-
 
 
 export const email = {email: 'nakanai.x@gmail.com'}

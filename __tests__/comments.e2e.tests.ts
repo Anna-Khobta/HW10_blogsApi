@@ -2,6 +2,7 @@ import {app} from "../src/settings";
 import request from "supertest"
 import {BlogType, CommentViewType} from "../src/type/types";
 import {createPostWithBlog, createUser, loginUserGetToken} from "../src/functions/tests-functions";
+import {client} from "../src/repositories/db";
 
 
 
@@ -11,6 +12,10 @@ describe.skip('/', () => {
 
     beforeAll(async () => {
         await request(app).delete('/testing/all-data')
+    })
+
+    afterAll(async () => {
+        await client.close();
     })
 
     it('Post, blog, with authorization', async () => {
