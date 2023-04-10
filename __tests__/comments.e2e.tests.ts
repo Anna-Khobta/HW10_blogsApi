@@ -3,6 +3,7 @@ import request from "supertest"
 import {BlogType, CommentViewType} from "../src/type/types";
 import {createPostWithBlog, createUser, loginUserGetToken} from "../src/functions/tests-functions";
 import {client} from "../src/repositories/db";
+import {basicAuth, myEmail, myLogin, myPassword} from "../src/functions/tests-objects";
 
 
 
@@ -204,7 +205,7 @@ describe.skip('/', () => {
            const createdPost = await createPostWithBlog(app, auth);
            let postId = createdPost.id
 
-           const createdUser = await createUser(app,auth)
+           const createdUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
 
            const userToken = await loginUserGetToken(app,auth)
 
@@ -229,8 +230,8 @@ describe.skip('/', () => {
                 id: expect.any(String),
                 content: "stringstringstringstringstring",
                 commentatorInfo: {
-                    userId: createdUser.id,
-                    userLogin: createdUser.login
+                    userId: createdUser.body.id,
+                    userLogin: createdUser.body.login
                 },
                 createdAt: createdComment.createdAt
             }
@@ -249,7 +250,7 @@ describe.skip('/', () => {
            const createdPost = await createPostWithBlog(app, auth);
            let postId = createdPost.id
 
-           const createdUser = await createUser(app,auth)
+           const createdUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
 
            const userToken = await loginUserGetToken(app,auth)
 
@@ -273,8 +274,8 @@ describe.skip('/', () => {
                id: expect.any(String),
                content: "stringstringstringstringstring",
                commentatorInfo: {
-                   userId: createdUser.id,
-                   userLogin: createdUser.login
+                   userId: createdUser.body.id,
+                   userLogin: createdUser.body.login
                },
                createdAt: createdComment.createdAt
            }
@@ -313,7 +314,7 @@ describe.skip('/', () => {
         const createdPost = await createPostWithBlog(app, auth);
         let postId = createdPost.id
 
-        const createdUser = await createUser(app,auth)
+        const createdUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
 
         const tryLogin = await request(app)
             .post('/auth/login')
