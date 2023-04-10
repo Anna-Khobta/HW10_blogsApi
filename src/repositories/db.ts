@@ -1,6 +1,8 @@
 import {MongoClient} from "mongodb";
 import {BlogType, CommentDBType, ipDbType, PostType, TokenDBType, UserDbType} from "../type/types";
 
+import mongoose from 'mongoose'
+
 
 const mongoUri = process.env.MONGO_URL
 
@@ -12,13 +14,12 @@ if (!mongoUri) {
 export const client = new MongoClient(mongoUri)
 const db = client.db(); // const db = client.db("BlogsApi")
 export const blogsCollection = db.collection<BlogType>("Blogs");
+
 export const postsCollection = db.collection<PostType>("Posts");
 export const usersCollection = db.collection<UserDbType>("Users");
 export const tokensCollection = db.collection<TokenDBType>("tokensCollection");
-
 export const ipCollection = db.collection<ipDbType>("ipCollection");
 
-//export const authCollection = db.collection<UserDbType>("Users");
 
 
 

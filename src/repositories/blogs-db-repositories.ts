@@ -6,7 +6,6 @@ export const blogsRepository = {
 
     async createBlog(newBlog: BlogType): Promise<BlogType | null> {
 
-
         await blogsCollection.insertOne(newBlog)
 
         return await blogsCollection.findOne({id: newBlog.id},{projection:{_id:0}})
