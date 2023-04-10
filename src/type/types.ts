@@ -8,6 +8,15 @@ export type BlogType = {
     isMembership: boolean
 }
 
+export type BlogsWithPagination = {
+    pagesCount: number,
+    page: number,
+    pageSize: number,
+    totalCount: number,
+    items: BlogType[]
+}
+
+
 export type PostType = {
     id: string,
     title: string,
@@ -17,6 +26,14 @@ export type PostType = {
     blogName: string,
     createdAt: string,
 
+}
+
+export type PostsWithPagination = {
+    pagesCount: number,
+    page: number,
+    pageSize: number,
+    totalCount: number,
+    items: PostType[]
 }
 
 export type CommentDBType = {
@@ -45,12 +62,6 @@ export type UserViewWhenAdd = {
     login: string,
     email: string,
     createdAt: string
-}
-
-export type UserTypeAuthMe = {
-    email: string,
-    login: string,
-    userId: string
 }
 
 export type UserDbType = {
