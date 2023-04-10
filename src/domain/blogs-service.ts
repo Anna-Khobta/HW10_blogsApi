@@ -16,6 +16,7 @@ export const blogsService= {
 
 
         const newBlogWithoughtID: BlogType | null = await blogsRepository.createBlog(newBlog)
+
         return newBlogWithoughtID
 
 
@@ -34,7 +35,7 @@ export const blogsService= {
     },
 
 
-    async deleteAllBlogs(): Promise<boolean> {
+    async deleteAllBlogs(): Promise<number> {
 
         return await blogsRepository.deleteAllBlogs()
 

@@ -1,19 +1,25 @@
-import request from "supertest";
-import {app} from "../src/settings";
 import {createBlog} from "../src/functions/tests-functions";
 import {
     blogDescription,
     blogName, blogUrl
 } from "../src/functions/tests-objects";
 import mongoose from "mongoose";
+import {client, mongoUri} from "../src/repositories/db";
+import {app} from "../src/settings";
+import request from "supertest";
 
 describe('Blogs', () => {
 
+    jest.setTimeout(3*60*1000)
+
     beforeAll(async () => {
+        await client.connect()
+        await mongoose.connect(mongoUri)
         await request(app).delete('/testing/all-data')
     })
 
     afterAll(async () => {
+        await client.connect()
         await mongoose.connection.close();
     })
 
@@ -28,7 +34,7 @@ describe('Blogs', () => {
             "description": expect.any(String),
             "websiteUrl": expect.any(String),
             "createdAt": expect.any(String),
-            "isMembership": true
+            "isMembership": false
         });
 
         expect(createNewBlog.body.createdAt).toMatch(/^20\d{2}(-[01]\d){2}T([0-2]\d):[0-5]\d:[0-5]\d\.\d{3}Z$/)

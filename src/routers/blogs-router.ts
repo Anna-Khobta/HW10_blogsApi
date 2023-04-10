@@ -14,7 +14,9 @@ import {postsQueryRepositories} from "../repositories/posts-query-repositories";
 import {contentValidation, shortDescriptionValidation, titleValidation} from "../middlewares/posts-validations";
 import {postsService} from "../domain/posts-service";
 
-blogsRouter.get('/blogs', async (req: Request, res: Response ) => {
+
+blogsRouter
+    .get('/blogs', async (req: Request, res: Response ) => {
 
     const {page, limit, sortDirection, sortBy, searchNameTerm, skip} = getPagination(req.query)
 
@@ -24,7 +26,7 @@ blogsRouter.get('/blogs', async (req: Request, res: Response ) => {
 
 
 // Returns blog by Id
-blogsRouter.get('/blogs/:id', async(req: Request, res: Response ) => {
+    .get('/blogs/:id', async(req: Request, res: Response ) => {
 
     let blogByID = await blogsQueryRepository.findBlogById(req.params.id)
 
@@ -36,9 +38,7 @@ blogsRouter.get('/blogs/:id', async(req: Request, res: Response ) => {
 
 })
 
-
-
-blogsRouter.post('/blogs',
+    .post('/blogs',
     authorizationMiddleware,
     nameValidation,
     descriptionValidation,
@@ -52,7 +52,7 @@ blogsRouter.post('/blogs',
 )
 
 
-blogsRouter.put('/blogs/:id',
+    .put('/blogs/:id',
     authorizationMiddleware,
     nameValidation,
     descriptionValidation,
@@ -69,7 +69,7 @@ blogsRouter.put('/blogs/:id',
         }
     })
 
-blogsRouter.delete('/blogs/:id',
+    .delete('/blogs/:id',
     authorizationMiddleware,
    async (req: Request, res: Response ) => {
 
@@ -84,7 +84,7 @@ blogsRouter.delete('/blogs/:id',
 
 
 // Returns all posts for specified blog
-blogsRouter.get("/blogs/:blogId/posts", async (req: Request, res: Response) => {
+    .get("/blogs/:blogId/posts", async (req: Request, res: Response) => {
 
     let checkBlogByID = await blogsQueryRepository.findBlogByblogId(req.params.blogId)
 
@@ -93,7 +93,7 @@ blogsRouter.get("/blogs/:blogId/posts", async (req: Request, res: Response) => {
 
     if (checkBlogByID) {
         let postsForBlog = await postsQueryRepositories.findPostsByBlogId(blogId, page, limit, sortDirection, sortBy, skip)
-        return res.status(200).send(postsForBlog)
+        return res.sendStatus(200).send(postsForBlog)
     } else {
         return res.send(404)
     }
@@ -101,7 +101,7 @@ blogsRouter.get("/blogs/:blogId/posts", async (req: Request, res: Response) => {
 })
 
 //create new post for special blog
-blogsRouter.post('/blogs/:blogId/posts',
+    .post('/blogs/:blogId/posts',
     authorizationMiddleware,
     titleValidation,
     shortDescriptionValidation,
@@ -113,9 +113,9 @@ blogsRouter.post('/blogs/:blogId/posts',
             req.body.shortDescription, req.body.content, req.params.blogId )
 
         if (newPostWithoughtID) {
-            res.status(201).send(newPostWithoughtID)
+            res.sendStatus(201).send(newPostWithoughtID)
         } else {
-            return res.send(404)
+            return res.sendStatus(404)
         }
     })
 
