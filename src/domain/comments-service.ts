@@ -1,4 +1,4 @@
-import {CommentDBType, CommentViewType, UserDbType} from "../repositories/types";
+import {CommentDBType, CommentViewType, UserDbType} from "../type/types";
 import {commentsRepositories} from "../repositories/comments-db-repositories";
 import {commentsCollection} from "../repositories/db";
 

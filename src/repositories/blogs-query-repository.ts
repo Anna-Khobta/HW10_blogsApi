@@ -1,6 +1,6 @@
 import {blogsCollection} from "./db";
 import {SortDirection} from "mongodb";
-import {BlogType} from "./types";
+import {BlogType} from "../type/types";
 
 
 

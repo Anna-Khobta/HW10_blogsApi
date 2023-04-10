@@ -1,6 +1,6 @@
 import {SortDirection} from "mongodb";
 import {postsCollection} from "./db";
-import {PostType} from "./types";
+import {PostType} from "../type/types";
 
 
 export const postsQueryRepositories = {

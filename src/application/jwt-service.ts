@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import {TokenDBType} from "../repositories/types";
+import {TokenDBType} from "../type/types";
 import {settings} from "../settings";
 import {tokenRepositories} from "../repositories/token-db-repositories";
 import { v4 as uuidv4 } from 'uuid';

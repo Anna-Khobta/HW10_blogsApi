@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import {jwtService} from "../application/jwt-service";
-import {TokenDBType} from "../repositories/types";
+import {TokenDBType} from "../type/types";
 
 export const refreshTokenMiddleware = async (req:Request, res:Response, next: NextFunction) => {
 

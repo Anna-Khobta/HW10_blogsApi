@@ -1,5 +1,5 @@
 import {blogsCollection} from "./db";
-import {BlogType} from "./types";
+import {BlogType} from "../type/types";
 
 
 export const blogsRepository = {

@@ -1,5 +1,5 @@
 import {MongoClient} from "mongodb";
-import {BlogType, CommentDBType, ipDbType, PostType, TokenDBType, UserDbType} from "./types";
+import {BlogType, CommentDBType, ipDbType, PostType, TokenDBType, UserDbType} from "../type/types";
 
 
 const mongoUri = process.env.MONGO_URL

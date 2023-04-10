@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import {ipDbRepositories} from "../repositories/ip-db-repositories";
-import {ipDbType} from "../repositories/types";
+import {ipDbType} from "../type/types";
 
 /*const checkLimits = (ip: string, enpoint: string): boolean => {
     //check...

@@ -1,6 +1,6 @@
 import {app} from "../src/settings";
 import request from "supertest"
-import {BlogType, CommentViewType} from "../src/repositories/types";
+import {BlogType, CommentViewType} from "../src/type/types";
 import {createPostWithBlog, createUser, loginUserGetToken} from "../src/functions/tests-functions";
 
 

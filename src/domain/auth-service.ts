@@ -1,6 +1,6 @@
 
 import {usersRepository} from "../repositories/users-db-repositories";
-import {UserDbType} from "../repositories/types";
+import {UserDbType} from "../type/types";
 
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(5);

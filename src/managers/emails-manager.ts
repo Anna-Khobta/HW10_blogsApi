@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import {UserDbType} from "../repositories/types";
+import {UserDbType} from "../type/types";
 import {v4 as uuidv4} from "uuid";
 import add from "date-fns/add";
 import {usersRepository} from "../repositories/users-db-repositories";

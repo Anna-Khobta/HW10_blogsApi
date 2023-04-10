@@ -1,4 +1,4 @@
-import {ipDbType} from "./types";
+import {ipDbType} from "../type/types";
 import {ipCollection} from "./db";
 
 

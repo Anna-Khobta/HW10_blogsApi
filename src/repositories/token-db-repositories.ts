@@ -1,4 +1,4 @@
-import {deviceViewType, TokenDBType} from "./types";
+import {deviceViewType, TokenDBType} from "../type/types";
 import {tokensCollection} from "./db";
 
 

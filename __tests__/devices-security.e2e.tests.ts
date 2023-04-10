@@ -15,7 +15,6 @@ import {
     userLoginPassEmail
 } from "../src/functions/tests-objects";
 import {client} from "../src/repositories/db";
-import express from "express";
 
 
 

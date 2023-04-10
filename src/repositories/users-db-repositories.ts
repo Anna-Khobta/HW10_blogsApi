@@ -1,6 +1,6 @@
 import { usersCollection} from "./db";
 import {SortDirection} from "mongodb";
-import {UserDbType, UserViewWhenAdd} from "./types";
+import {UserDbType, UserViewWhenAdd} from "../type/types";
 
 
 const bcrypt = require('bcryptjs');

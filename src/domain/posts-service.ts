@@ -1,5 +1,5 @@
 import {postsRepositories} from "../repositories/posts-db-repositories";
-import {PostType} from "../repositories/types";
+import {PostType} from "../type/types";
 
 export const postsService = {
 
