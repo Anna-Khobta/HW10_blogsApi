@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw, unregisteredEmail, userLoginPassEmail} from "./tests-objects";
+import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw} from "./tests-objects";
 import {app} from "../settings";
 
 
@@ -21,6 +21,66 @@ export const createBlog = async (blogName: string, blogDescription: string, blog
 
 
 
+
+
+
+
+// 🌺🌺🌺 POSTS
+
+export const createPost = async (title: string, shortDescription: string, content: string, blogId:string ) => {
+
+    return request(app)
+        .post('/posts')
+        .set('Authorization', basicAuth)
+        .send({
+        "title": title,
+        "shortDescription": shortDescription,
+        "content": content,
+        "blogId": blogId
+        })
+}
+
+export const getPostById = async (id:string|null) => {
+    return request(app)
+        .get('/posts/' + id)
+}
+
+
+export const getPostsWithPagination = async (sortBy:string|null,
+                                             sortDirection: string|null,
+                                             pageNumber: string|null,
+                                             pageSize: string|null) => {
+
+    return request(app)
+        .get('/posts/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+}
+
+
+
+// 🌺🌺🌺 POSTS2
+
+export async function createPostWithBlog (app: express.Application)
+{
+    const createdResponseBlog = await request(app)
+        .post('/blogs')
+        .set('Authorization', basicAuth)
+        .send(blogNameDescriptionUrl)
+        .expect(201);
+    const createdBlog = createdResponseBlog.body;
+
+    const createdResponsePost = await request(app)
+        .post('/posts')
+        .set('Authorization', basicAuth)
+        .send({
+            "title": "1post title",
+            "shortDescription": "1post string",
+            "content": "1post string",
+            "blogId": createdBlog.id
+        })
+        .expect(201);
+
+    return createdResponsePost.body;
+}
 
 
 
@@ -71,34 +131,9 @@ export const deleteByDeviceId = async (deviceId: string|null|number, cookies:any
 }
 
 
-// 🌺🌺🌺 POSTS
-
-export async function createPostWithBlog (app: express.Application, auth: {login: string, password: string})
-{
-    const createdResponseBlog = await request(app)
-        .post('/blogs')
-        .set('Authorization', basicAuth)
-        .send(blogNameDescriptionUrl)
-        .expect(201);
-    const createdBlog = createdResponseBlog.body;
-
-    const createdResponsePost = await request(app)
-        .post('/posts')
-        .set('Authorization', basicAuth)
-        .send({
-            "title": "1post title",
-            "shortDescription": "1post string",
-            "content": "1post string",
-            "blogId": createdBlog.id
-        })
-        .expect(201);
-
-    return createdResponsePost.body;
-}
-
 // 🌺🌺🌺 AUTH
 
-export async function loginUserGetToken (app: express.Application, auth: {login: string, password: string}) {
+export async function loginUserGetToken (app: express.Application) {
 
     const tryLogin = await request(app)
         .post('/auth/login')
@@ -147,17 +182,20 @@ export const passwordRecovery = async (email: any) => {
         .send({email: email})
 }
 
-const newPassword = "newPassword"
+export const createNewPassword = async <T>(password: any, recoveryCode: any): Promise<{body: T, status: number}> => {
 
-export const createNewPassword = async (password: any, recoveryCode: any) => {
-
-    return request(app)
+    const result = await request(app)
         .post('/auth/new-password')
         .send({
                 "newPassword": password,
                 "recoveryCode": recoveryCode
             }
         )
+
+    return {
+        body: result.body,
+        status: result.status
+    }
 }
 
 
@@ -186,6 +224,7 @@ export const fiveRequests = async (url: string, someBody: any) => {
         requests.push(
             request(app)
                 .post(url)
+                .set('Authorization', basicAuth)
                 .send(someBody)
         );
     }
@@ -196,9 +235,29 @@ export const fiveRequests = async (url: string, someBody: any) => {
     return responses[maxRequests].status
 }
 
+export const createSeveralItems = async (numberTimes: number, url: string, someBody: any) => {
+
+    let items = []
+
+    for (let i = 0; i < numberTimes; i++) {
+        const createResponse = await request(app)
+            .post(url)
+            .set('Authorization', basicAuth)
+            .send(
+                someBody
+            )
+        items.push(createResponse.body)
+    }
+    return items
+}
+
 export const waitSomeSeconds = async (seconds: number) => {
 
     const interval = seconds * 1000; // in milliseconds
     await new Promise(resolve => setTimeout(resolve, interval));
 
+}
+
+export const clearAllDb = async () => {
+    await request(app).delete('/testing/all-data')
 }

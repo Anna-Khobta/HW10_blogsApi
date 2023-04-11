@@ -1,10 +1,25 @@
 
+
 export const auth = {login: 'admin', password: 'qwerty'}
 export const basicAuth = "Basic YWRtaW46cXdlcnR5"
 
 export const blogName = "AnnaBlog"
 export const blogDescription = "AnnaBlog Description"
 export const blogUrl = "annablog.com"
+
+
+
+export const postTitle = "AnnaTitle11111"
+export const postShortDescription = "AnnaShortDescription11"
+export const postContent= "AnnaPostContent1111"
+
+
+export type PostBodySendType = {
+    "title": string,
+    "shortDescription": string,
+    "content": string,
+    "blogId": string
+}
 
 
 export const myLogin = "nakanai"
