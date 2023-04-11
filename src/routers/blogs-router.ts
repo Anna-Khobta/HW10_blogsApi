@@ -76,9 +76,9 @@ blogsRouter
     const isDeleted = await blogsService.deleteBlog(req.params.id)
 
     if (isDeleted) {
-        res.send(204)
+        res.sendStatus(204)
     } else {
-        res.send(404)
+        res.sendStatus(404)
     }
    })
 
