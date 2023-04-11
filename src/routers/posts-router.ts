@@ -72,14 +72,15 @@ postsRouter
     inputValidationMiddleware,
     async (req: Request, res:Response) => {
 
-    const updatedPosWithoughtID = await postsService.updatePost(req.params.id, req.body.title,
+    const updatedPostId = await postsService.updatePost(req.params.id, req.body.title,
         req.body.shortDescription, req.body.content, req.body.blogId )
 
-        if (updatedPosWithoughtID) {
-            res.status(204)
+        console.log(updatedPostId)
 
+        if (!updatedPostId) {
+            return res.sendStatus(404)
         } else {
-            return res.status(404)
+            return res.sendStatus(204)
         }
     })
 
@@ -89,10 +90,12 @@ postsRouter.delete('/:id',
 
         const isDeleted = await postsService.deletePost(req.params.id)
 
+        console.log(isDeleted)
+
         if (isDeleted) {
-            res.status(204)
+            res.sendStatus(204)
         } else {
-            res.status(404)
+            res.sendStatus(404)
         }
     })
 

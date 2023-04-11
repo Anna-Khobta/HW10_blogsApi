@@ -42,15 +42,16 @@ export const postsService = {
         let foundPostId = await postsQueryRepositories.findPostById(postId)
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-        if (!foundPostId || !foundBlogName) { return null }
+        if (!foundPostId) { return null }
+        if (!foundBlogName) { return null }
 
-            const postInstance = await postsRepositories.updatePost(postId, title, shortDescription,
-                content)
+            const updatedPostId = await postsRepositories.updatePost(postId, title, shortDescription, content)
 
-            if (!postInstance) { return null}
+        console.log(updatedPostId)
 
-            const createdId = postInstance
-            return createdId
+            if (!updatedPostId) { return null}
+
+            return updatedPostId
     },
 
     async deletePost(id: string): Promise<boolean> {

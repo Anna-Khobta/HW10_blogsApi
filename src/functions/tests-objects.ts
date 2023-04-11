@@ -9,17 +9,15 @@ export const blogUrl = "annablog.com"
 
 
 
-export const postTitle = "AnnaTitle11111"
-export const postShortDescription = "AnnaShortDescription11"
-export const postContent= "AnnaPostContent1111"
+export const postTitle = "AnnaTitle"
+export const postShortDescription = "AnnaShortDescription"
+export const postContent= "AnnaPostContent"
+
+export const postNewTitle = "AnnaNewTitle"
+export const postNewShortDescription = "AnnaNewShortDescription"
+export const postNewContent= "AnnaNewPostContent"
 
 
-export type PostBodySendType = {
-    "title": string,
-    "shortDescription": string,
-    "content": string,
-    "blogId": string
-}
 
 
 export const myLogin = "nakanai"

@@ -55,6 +55,27 @@ export const getPostsWithPagination = async (sortBy:string|null,
         .get('/posts/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
 }
 
+export const updatePost = async (title: string, shortDescription: string, content: string, blogId:string, postId: string ) => {
+
+    return request(app)
+        .put('/posts/' + postId)
+        .set('Authorization', basicAuth)
+        .send({
+            "title": title,
+            "shortDescription": shortDescription,
+            "content": content,
+            "blogId": blogId
+        })
+}
+
+export const deletePostById = async (id: string|null ) => {
+    return request(app)
+        .delete('/posts/' + id)
+        .set('Authorization', basicAuth)
+}
+
+
+
 
 
 // 🌺🌺🌺 POSTS2
