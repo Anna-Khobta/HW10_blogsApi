@@ -18,51 +18,52 @@ import {commentsQueryRepositories} from "../repositories/comments-query-reposito
 export const postsRouter = Router({})
 
 
-postsRouter.get('/',
+postsRouter
+
+    .post('/',
+        authorizationMiddleware,
+        idValidation,
+        titleValidation,
+        shortDescriptionValidation,
+        contentValidation,
+        inputValidationMiddleware,
+        async (req: Request, res: Response ) => {
+
+
+            const createdId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId )
+
+            if (!createdId) { return res.sendStatus(404) }
+
+            const postView = await postsQueryRepositories.findPostById(createdId)
+
+            res.status(201).send(postView)
+
+        })
+
+    .get('/',
     async (req: Request, res: Response ) => {
 
        const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
 
-
         let foundPosts = await postsQueryRepositories.findPosts(page, limit, sortDirection, sortBy, skip)
+
         res.status(200).send(foundPosts)
     })
 
 
-postsRouter.get('/:id', async (req: Request, res: Response ) => {
+    .get('/:id', async (req: Request, res: Response ) => {
 
     let findPostID = await postsQueryRepositories.findPostById(req.params.id)
 
-    if (findPostID) {
-        return res.status(200).send(findPostID)
+    if (!findPostID) {
+        return res.status(404)
     } else {
-        return res.sendStatus(404)
+        return res.status(200).send(findPostID)
     }
+
 })
 
-
-postsRouter.post('/',
-    authorizationMiddleware,
-    idValidation,
-    titleValidation,
-    shortDescriptionValidation,
-    contentValidation,
-    inputValidationMiddleware,
-    async (req: Request, res: Response ) => {
-
-
-        const newPostWithoughtID = await postsService.createPost(req.body.title,
-            req.body.shortDescription, req.body.content, req.body.blogId )
-
-        if (newPostWithoughtID) {
-            res.status(201).send(newPostWithoughtID)
-        } else {
-            return res.sendStatus(404)
-        }
-    })
-
-
-postsRouter.put('/:id',
+    .put('/:id',
     authorizationMiddleware,
     idValidation,
     titleValidation,
@@ -75,14 +76,12 @@ postsRouter.put('/:id',
         req.body.shortDescription, req.body.content, req.body.blogId )
 
         if (updatedPosWithoughtID) {
-            res.sendStatus(204)
+            res.status(204)
 
         } else {
-            return res.sendStatus(404)
+            return res.status(404)
         }
     })
-
-
 
 postsRouter.delete('/:id',
     authorizationMiddleware,
@@ -91,14 +90,16 @@ postsRouter.delete('/:id',
         const isDeleted = await postsService.deletePost(req.params.id)
 
         if (isDeleted) {
-            res.sendStatus(204)
+            res.status(204)
         } else {
-            res.sendStatus(404)
+            res.status(404)
         }
     })
 
+// POSTS - COMMENTS
 
-postsRouter.post('/:postId/comments',
+postsRouter
+    .post('/:postId/comments',
         authBearerMiddleware,
         contentCommentValidation,
         inputValidationMiddleware,
@@ -108,27 +109,25 @@ postsRouter.post('/:postId/comments',
 
             const userInfo = req.user
 
-            if (post) {
-                const newComment = await commentsService.createComment(post.id, req.body.content, userInfo!)
-                res.status(201).send(newComment)
-            } else {
-                return res.sendStatus(404)
-            }
+            if (!post) { return res.sendStatus(404) }
+
+            const newComment = await commentsService.createComment(post.id, req.body.content, userInfo!)
+            res.status(201).send(newComment)
+
         })
 
-postsRouter.get('/:postId/comments',
+    .get('/:postId/comments',
     async (req: Request, res: Response ) => {
 
         const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
 
         let post = await postsQueryRepositories.findPostById(req.params.postId)
 
-        if (post) {
-            const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
-            res.status(200).send(foundComments)
-        } else {
-            return res.sendStatus(404)
-        }
+        if (!post) { return res.sendStatus(404) }
+
+        const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
+        res.status(200).send(foundComments)
+
     })
 
 

@@ -1,17 +1,23 @@
 import {postsRepositories} from "../repositories/posts-db-repositories";
-import {PostType} from "../type/types";
+import {PostTypeWithoutIds} from "../type/types";
+import {blogsQueryRepository} from "../repositories/blogs-query-repository";
+import {postsQueryRepositories} from "../repositories/posts-query-repositories";
+import {PostModelClass} from "../repositories/db";
+
+
 
 export const postsService = {
 
     async createPost(title: string, shortDescription: string, content: string,
-                     blogId: string): Promise<PostType | null | undefined> {
+                     blogId: string): Promise<string | null> {
 
-        let foundBlogName = await postsRepositories.findBlogName(blogId)
+        let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
+        if (!foundBlogName) { return null }
 
-        if (foundBlogName) {
-            const newPost = {
-                id: (+(new Date())).toString(),
+            let newPost: PostTypeWithoutIds = {
+                // _id: new ObjectId(),
+                //id: " ",
                 title: title,
                 shortDescription: shortDescription,
                 content: content,
@@ -19,54 +25,40 @@ export const postsService = {
                 blogName: foundBlogName.name,
                 createdAt: (new Date()).toISOString(),
             }
-            const newPostInDb = await postsRepositories.createPost(newPost)
 
-            return newPostInDb
+            //const newPostInDb = await postsRepositories.createPost(newPost)
 
+        const postInstance = new PostModelClass(newPost)
+        await postsRepositories.save(postInstance)
 
-        }},
+        const createdId = postInstance._id.toString()
 
-    async updatePost(id: string, title: string, shortDescription: string, content: string,
-                     blogId: string): Promise<boolean | undefined> {
+            return createdId
+    },
 
-        let foundPostId = await postsRepositories.findPostById(id)
-        let foundBlogName = await postsRepositories.findBlogName(blogId)
+    async updatePost(postId: string, title: string, shortDescription: string, content: string,
+                     blogId: string): Promise <string | null> {
 
-        if (foundPostId && foundBlogName) {
+        let foundPostId = await postsQueryRepositories.findPostById(postId)
+        let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-        return await postsRepositories.updatePost (id, title, shortDescription,
-            content)
-        }
+        if (!foundPostId || !foundBlogName) { return null }
+
+            const postInstance = await postsRepositories.updatePost(postId, title, shortDescription,
+                content)
+
+            if (!postInstance) { return null}
+
+            const createdId = postInstance
+            return createdId
     },
 
     async deletePost(id: string): Promise<boolean> {
-
        return postsRepositories.deletePost(id)
     },
 
-    async deleteAllPosts(): Promise<boolean> {
+    async deleteAllPosts(): Promise<number> {
         return postsRepositories.deleteAllPosts()
 
     }
 }
-
-
-
-/*async findPosts(title: string | null | undefined): Promise<PostType[]> {
-    const filter: any = {}
-
-    if (title) {
-        filter.title = {$regex: title}
-    }
-    return postsCollection.find((filter), {projection: {_id: 0}}).toArray()
-},
-
-
-async findPostById(id: string): Promise<PostType | null> {
-    let post: PostType | null = await postsCollection.findOne({id: id}, {projection: {_id: 0}})
-    if (post) {
-        return post
-    } else {
-        return null
-    }
-},*/
