@@ -1,22 +1,24 @@
-import {SortDirection} from "mongodb";
 import {PostModelClass} from "./db";
-import {PostsWithPagination, PostType} from "../type/types";
+import {PostsWithPagination, PostViewType} from "../type/types";
 import {SortOrder} from "mongoose";
 
 
 export const postsQueryRepositories = {
 
-    async findPosts(page: number, limit:number, sortDirection: SortOrder, sortBy: string, skip: number): Promise<PostsWithPagination> {
-        let findPosts: PostType[] = await PostModelClass.find(
+    async findPosts(page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number): Promise<PostsWithPagination> {
+
+        let findPosts: PostViewType[] = await PostModelClass.find(
             {},
-            {projection: {_id: 0}})
+            {_id: 0, __v: 0})
             .skip(skip)
             .limit(limit)
-            .sort({ sortBy: sortDirection })
+            .sort({sortBy: sortDirection})
             .lean()
 
+        console.log(findPosts)
+
         const total = await PostModelClass.countDocuments()
-        const pagesCount = Math.ceil(total/ limit)
+        const pagesCount = Math.ceil(total / limit)
 
         return {
             pagesCount: pagesCount,
@@ -28,26 +30,37 @@ export const postsQueryRepositories = {
 
     },
 
-    async findPostById(id: string): Promise<PostType | null> {
-        let post: PostType | null = await PostModelClass.findOne({id: id}, {projection: {_id: 0}}).lean()
-        if (post) {
-            return post
-        } else {
+    async findPostById(createdId: string): Promise<PostViewType | null> {
+
+        const post = await PostModelClass.findById(createdId).lean()
+
+        if (!post) {
             return null
         }
+
+        const postView = {
+            id: post._id.toString(),
+            title: post.title,
+            shortDescription: post.shortDescription,
+            content: post.content,
+            blogId: post.blogId,
+            blogName: post.blogName,
+            createdAt: post.createdAt
+        }
+        return postView
     },
 
-    async findPostsByBlogId (blogId:string, page: number, limit:number, sortDirection: SortOrder, sortBy: string, skip: number): Promise <PostsWithPagination> {
-        let findPosts: PostType[] = await PostModelClass.find(
+    async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number): Promise<PostsWithPagination> {
+        let findPosts: PostViewType[] = await PostModelClass.find(
             {blogId: blogId},
             {projection: {_id: 0}})
             .skip(skip)
             .limit(limit)
-            .sort({ sortBy: sortDirection })
+            .sort({sortBy: sortDirection})
             .lean()
 
         const total = await PostModelClass.countDocuments({blogId: blogId})
-        const pagesCount = Math.ceil(total/ limit)
+        const pagesCount = Math.ceil(total / limit)
 
         return {
             pagesCount: pagesCount,
@@ -56,6 +69,5 @@ export const postsQueryRepositories = {
             totalCount: total,
             items: findPosts
         }
-
     }
 }

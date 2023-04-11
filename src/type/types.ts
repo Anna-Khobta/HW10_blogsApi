@@ -1,3 +1,5 @@
+import {ObjectId} from "mongodb";
+
 
 export type BlogType = {
     id: string,
@@ -17,7 +19,7 @@ export type BlogsWithPagination = {
 }
 
 
-export type PostType = {
+export type PostViewType = {
     id: string,
     title: string,
     shortDescription: string,
@@ -28,12 +30,32 @@ export type PostType = {
 
 }
 
+export type PostTypeWithMongoId = {
+    _id: ObjectId,
+    id: string,
+    title: string,
+    shortDescription: string,
+    content: string,
+    blogId: string,
+    blogName: string,
+    createdAt: string,
+
+}
+
+export type PostTypeWithoutIds = {
+    title: string,
+    shortDescription: string,
+    content: string,
+    blogId: string,
+    blogName: string,
+    createdAt: string,}
+
 export type PostsWithPagination = {
     pagesCount: number,
     page: number,
     pageSize: number,
     totalCount: number,
-    items: PostType[]
+    items: PostViewType[]
 }
 
 export type CommentDBType = {
@@ -83,6 +105,13 @@ export type UserDbType = {
 
     }
 }
+
+export type PostDbType = {title: string,
+    shortDescription: string,
+    content: string,
+    blogId: string,
+    blogName: string,
+    createdAt: string}
 
 export type TokenDBType = {
     iat: number,

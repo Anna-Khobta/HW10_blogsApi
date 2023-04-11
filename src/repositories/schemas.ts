@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {PostDbType} from "../type/types";
 
 export const blogSchema = new mongoose.Schema({
     id: String,
@@ -9,8 +10,8 @@ export const blogSchema = new mongoose.Schema({
     isMembership: Boolean
 });
 
-export const postSchema = new mongoose.Schema( {
-    id: String,
+export const postSchema = new mongoose.Schema<PostDbType>( {
+    //id: String,
     title: String,
     shortDescription: String,
     content: String,

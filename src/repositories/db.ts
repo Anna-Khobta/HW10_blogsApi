@@ -1,5 +1,5 @@
 import {MongoClient} from "mongodb";
-import {CommentDBType, ipDbType, PostType, TokenDBType, UserDbType} from "../type/types";
+import {CommentDBType, ipDbType, TokenDBType, UserDbType} from "../type/types";
 
 import mongoose from 'mongoose'
 import {blogSchema, postSchema} from "./schemas";
@@ -26,7 +26,7 @@ export async function runDb () {
     try {
         //connect the client to the server
         await client.connect()
-        await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri!);
 
         // esteblish and verufy connection
         await db.command({ ping: 1});
