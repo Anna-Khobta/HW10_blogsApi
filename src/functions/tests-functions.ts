@@ -1,6 +1,12 @@
 import express from "express";
 import request from "supertest";
-import {basicAuth, blogNameDescriptionUrl, loginOrEmailPassw} from "./tests-objects";
+import {
+    basicAuth, blogDescription, blogName,
+    blogNameDescriptionUrl, blogUrl,
+    commentContent,
+    loginOrEmailPassw, myEmail, myLogin, myLoginOrEmail, myPassword, postContent, postShortDescription, postTitle,
+    secondCommentContent
+} from "./tests-objects";
 import {app} from "../settings";
 
 
@@ -19,9 +25,19 @@ export const createBlog = async (blogName: string, blogDescription: string, blog
     })
 }
 
+export const getBlogById = async (id:string|null) => {
+    return request(app)
+        .get('/blogs/' + id)
+}
 
+export const getBlogsWithPagination = async (sortBy:string|null,
+                                             sortDirection: string|null,
+                                             pageNumber: string|null,
+                                             pageSize: string|null) => {
 
-
+    return request(app)
+        .get('/blogs/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+}
 
 
 
@@ -44,7 +60,6 @@ export const getPostById = async (id:string|null) => {
     return request(app)
         .get('/posts/' + id)
 }
-
 
 export const getPostsWithPagination = async (sortBy:string|null,
                                              sortDirection: string|null,
@@ -154,6 +169,22 @@ export const deleteByDeviceId = async (deviceId: string|null|number, cookies:any
 
 // 🌺🌺🌺 AUTH
 
+export const authLogin = (loginOrEmail:string, password: string) => {
+    return request(app)
+        .post("/auth/login")
+        .send(    {
+            "loginOrEmail": loginOrEmail,
+            "password": password})
+}
+
+export const authMe = (userAccessToken:string) => {
+    return request(app)
+        .get("/auth/me")
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+}
+
+
+
 export async function loginUserGetToken (app: express.Application) {
 
     const tryLogin = await request(app)
@@ -230,7 +261,50 @@ export const loginInSystem = async (loginOrEmail: any, password: any) => {
         })
 }
 
+// 🌺🌺🌺 COMMENTS
 
+export const createComment = async (postId: string, userAccessToken: string) => {
+
+    return request(app)
+        .post('/posts/' + postId + '/comments')
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .send({
+            "content": commentContent
+        })
+}
+export const updateComment = async (commentId: string, userAccessToken: string) => {
+
+    return request(app)
+        .put('/comments/' + commentId)
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .send({
+            "content": secondCommentContent
+        })
+}
+
+export const deleteComment = async (commentId: string, userAccessToken: string) => {
+
+    return request(app)
+        .delete('/comments/' + commentId)
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+}
+
+export const getCommentById = async (commentId: string) => {
+    return request(app)
+        .get('/comments/' + commentId)
+
+}
+
+export const getCommentsWithPagination =
+    async (sortBy:string|null,
+           sortDirection: string|null,
+           pageNumber: string|null,
+           pageSize: string|null,
+           postId:string) => {
+
+    return request(app)
+        .get('/posts/' + postId + "/comments/" + "?" + sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+}
 
 
 // 🌺🌺🌺 OTHER
@@ -256,14 +330,14 @@ export const fiveRequests = async (url: string, someBody: any) => {
     return responses[maxRequests].status
 }
 
-export const createSeveralItems = async (numberTimes: number, url: string, someBody: any) => {
+export const createSeveralItems = async (numberTimes: number, url: string, someBody: any, authChoose: string) => {
 
     let items = []
 
     for (let i = 0; i < numberTimes; i++) {
         const createResponse = await request(app)
             .post(url)
-            .set('Authorization', basicAuth)
+            .set('Authorization', authChoose)
             .send(
                 someBody
             )
@@ -282,3 +356,4 @@ export const waitSomeSeconds = async (seconds: number) => {
 export const clearAllDb = async () => {
     await request(app).delete('/testing/all-data')
 }
+

@@ -1,3 +1,4 @@
+import exp from "constants";
 
 
 export const auth = {login: 'admin', password: 'qwerty'}
@@ -23,9 +24,14 @@ export const postNewContent= "AnnaNewPostContent"
 export const myLogin = "nakanai"
 export const secondLogin = "nakanai1"
 export const myPassword = "nakanai"
-export const myEmail = "nakanai.x@gmail.com"
 export const newPassword = "newPassword"
+export const myEmail = "nakanai.x@gmail.com"
 export const secondEmail = 'ana14i88@gmail.com'
+
+export const myLoginOrEmail = "nakanai"
+
+export const commentContent = "Hello! Here is some content"
+export const secondCommentContent = "Updated some content"
 
 
 export const fourBrowsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
@@ -35,7 +41,6 @@ export const fourBrowsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb
 
 
 export const email = {email: 'nakanai.x@gmail.com'}
-export const unregisteredEmail = {email: 'ana14i88@gmail.com'}
 
 export const userLoginPassEmail = {
     "login": "nakanai",
