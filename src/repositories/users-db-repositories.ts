@@ -18,7 +18,6 @@ export const usersRepository = {
         }
     },
 
-
     async deleteUser(id: string): Promise<boolean> {
         const userInstance = await UserModelClass.findOne({_id: id})
         if (!userInstance) return false
@@ -34,77 +33,7 @@ export const usersRepository = {
     },
 
 
-    async checkUserByEmail(email: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"accountData.email": email})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-    async checkUserByLogin(login: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"accountData.login": login})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-    async checkUserByCode(code: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"emailConfirmation.confirmationCode": code})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-    async findUserByRecoveryCode(recoveryCode: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"passwordRecovery.recoveryCode": recoveryCode}, {projection: {_id: 0, password: 0,}})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-    async checkUserLoginOrEmail(loginOrEmail: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({$or: [{"accountData.login": loginOrEmail}, {"accountData.email": loginOrEmail}]})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-
-    async findUserById(userId: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne(
-            {id: userId},
-            {projection: {_id: 0, password: 0, createdAt: 0}})
-
-        return foundUser || null
-    },
-
-    async createUserRegistrashion(newUser: UserDbType): Promise<UserDbType | null> {
+/*    async createUserRegistrashion(newUser: UserDbType): Promise<UserDbType | null> {
 
         await usersCollection.insertOne(newUser)
 
@@ -112,67 +41,68 @@ export const usersRepository = {
             {id: newUser.id}, {projection: {_id: 0}})
 
         return newUserWithoughtId
-    },
+    },*/
 
-    async findUserByConfirmationCode(code: string): Promise<UserDbType | null> {
 
-        let foundUser = await usersCollection.findOne(
-            {"emailConfirmation.confirmationCode": code},
-            {projection: {_id: 0}})
 
-        return foundUser || null
-    },
+    async updateConfirmation(userId: string): Promise<string | null> {
+        let userInstance = await UserModelClass.findOne({_id: userId})
 
-    async updateConfirmation(id: string): Promise<boolean> {
-        let result = await usersCollection.updateOne({id: id}, {$set: {"emailConfirmation.isConfirmed": true}})
-        return result.modifiedCount === 1
-    },
+        if (!userInstance) { return null}
 
-    async findUserByEmail(email: string): Promise<UserDbType | null> {
+        userInstance.emailConfirmation.isConfirmed = true;
 
-        let foundUser = await usersCollection.findOne(
-            {"accountData.email": email},
-            {projection: {_id: 0}})
-
-        return foundUser || null
+        try {
+            await userInstance.save()
+            return userInstance._id.toString()
+        } catch (error) {
+            console.log(error)
+            return null
+        }
     },
 
     async updateConfirmationCode(id: string, generateConfirmationCode: string, generateExpirationDate: Date): Promise<boolean> {
-        let result = await usersCollection.updateOne({id: id},
-            {
-                $set: {
-                    "emailConfirmation.confirmationCode": generateConfirmationCode,
-                    "emailConfirmation.expirationDate": generateExpirationDate
-                }
-            })
-        return result.modifiedCount === 1
+        let userInstance = await UserModelClass.findOne({_id: id})
+
+        if (!userInstance) { return false}
+
+        userInstance.emailConfirmation.confirmationCode = generateConfirmationCode;
+        userInstance.emailConfirmation.expirationDate = generateExpirationDate
+
+        await userInstance.save()
+        return true
+
     },
 
     async updatePasswordRecoveryCode(id: string, generatePassRecovCode: string, generatePassRecovCodeExpirationDate: Date): Promise<boolean> {
-        let result = await usersCollection.updateOne({id: id},
-            {
-                $set: {
-                    "passwordRecovery.recoveryCode": generatePassRecovCode,
-                    "passwordRecovery.exp": generatePassRecovCodeExpirationDate
-                }
-            })
-        return result.modifiedCount === 1
+        let userInstance = await UserModelClass.findOne({_id: id})
+        if (!userInstance) { return false}
+
+        userInstance.passwordRecovery.recoveryCode = generatePassRecovCode;
+        userInstance.passwordRecovery.exp = generatePassRecovCodeExpirationDate;
+
+        await userInstance.save()
+
+        return true
     },
 
-    async updatePassword (id: string, newPassword: string): Promise<boolean> {
+    async updatePassword (id: string, newPassword: string): Promise<string | null> {
 
         const hashPassword = await bcrypt.hash(newPassword, salt)
 
-        // password hash
-        let result = await usersCollection.updateOne({id: id},
-            {
-                $set: {
-                    "accountData.hashPassword": hashPassword,
-                    "passwordRecovery.recoveryCode": null,
-                    "passwordRecovery.exp": null
-                }
-            })
-        return result.modifiedCount === 1
+        let userInstance = await UserModelClass.findOne({_id: id})
+        if (!userInstance) { return null}
+        userInstance.accountData.hashPassword = hashPassword;
+        userInstance.passwordRecovery.recoveryCode = null;
+        userInstance.passwordRecovery.exp = null;
+
+        try {
+            await userInstance.save()
+            return userInstance._id.toString()
+        } catch (error) {
+            console.log(error)
+            return null
+        }
     }
 }
 
@@ -243,3 +173,77 @@ export const usersRepository = {
          items: items
      }
  },*/
+
+
+
+/*    async checkUserByEmail(email: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"accountData.email": email})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+        перенесла в квери в универсальную фунцию findUserByLoginOrEmail
+
+    },*/
+
+/*    async checkUserByLogin(login: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"accountData.login": login})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+/*    async checkUserByCode(code: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"emailConfirmation.confirmationCode": code})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+/*    async findUserByRecoveryCode(recoveryCode: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"passwordRecovery.recoveryCode": recoveryCode}, {projection: {_id: 0, password: 0,}})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+/*    async checkUserLoginOrEmail(loginOrEmail: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({$or: [{"accountData.login": loginOrEmail}, {"accountData.email": loginOrEmail}]})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+
+/*    async findUserById(userId: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne(
+            {id: userId},
+            {projection: {_id: 0, password: 0, createdAt: 0}})
+
+        return foundUser || null
+    },*/

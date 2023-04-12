@@ -1,8 +1,8 @@
-
 import {usersRepository} from "../repositories/users-db-repositories";
-import {UserTypeWiithoutIds} from "../type/types";
+import {UserTypeWiithoutIds, UserViewType} from "../type/types";
 import {v4 as uuidv4} from "uuid";
 import {UserModelClass} from "../repositories/db";
+import {usersQueryRepositories} from "../repositories/users-query-repositories";
 
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(5);
@@ -10,7 +10,7 @@ const salt = bcrypt.genSaltSync(5);
 
 export const usersService= {
 
-    async createUser(login:string, email:string, password: string): Promise <string | null> {
+    async createUser(login:string, email:string, password: string, isConfirmed: boolean): Promise <string | null> {
 
         const hashPassword = await bcrypt.hash(password, salt)
 
@@ -24,7 +24,7 @@ export const usersService= {
             emailConfirmation: {
                 confirmationCode: uuidv4(),
                 expirationDate: new Date(),
-                isConfirmed: true
+                isConfirmed: isConfirmed
             },
             passwordRecovery: {
                 recoveryCode: null,
@@ -35,16 +35,13 @@ export const usersService= {
         const userInstance = new UserModelClass(newUser)
         await usersRepository.save(userInstance)
 
-        const createdUserId = userInstance._id.toString()
-        return createdUserId
+        return userInstance._id.toString()
 
     },
 
     async checkPasswordCorrect(passwordHash:string, password: string): Promise <boolean> {
 
-        const validPassword: boolean = await bcrypt.compare(password, passwordHash)
-
-        return validPassword
+        return await bcrypt.compare(password, passwordHash)
 
     },
 
@@ -57,8 +54,8 @@ export const usersService= {
 
     },
 
-    async findUserById(userId:string) {
-        return await usersRepository.findUserById(userId)
+    async findUserById(userId:string): Promise<UserViewType | null> {
+        return await usersQueryRepositories.findUserById(userId)
     }
 
 }

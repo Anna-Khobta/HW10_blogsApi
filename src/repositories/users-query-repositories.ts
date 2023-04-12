@@ -1,10 +1,10 @@
-import {UserDbType, UsersWithPagination, UserViewType} from "../type/types";
+import {UserDbType, UserInfoForEmail, UsersWithPagination, UserViewType, UserWithMongoId} from "../type/types";
 import {PostModelClass, UserModelClass} from "./db";
 import {SortOrder} from "mongoose";
 
 export const usersQueryRepositories = {
 
-    async findUserByLoginOrEmail(login: string, email: string): Promise<UserDbType | null | boolean> {
+    async findUserByLoginOrEmail(login: string | null, email: string | null): Promise<UserWithMongoId | null> {
 
         let foundUser = await UserModelClass.findOne({$or: [{"accountData.login": login}, {"accountData.email": email}]}).lean()
 
@@ -12,9 +12,9 @@ export const usersQueryRepositories = {
 
     },
 
-    async findUserById(createdId: string): Promise<UserViewType | null> {
+    async findUserById(userId: string): Promise<UserViewType | null> {
 
-        const user = await UserModelClass.findById(createdId).lean()
+        const user = await UserModelClass.findById(userId).lean()
 
         if (!user) { return null }
 
@@ -26,6 +26,28 @@ export const usersQueryRepositories = {
         }
 
         return userView
+    },
+
+    async findUserByCode(code: string): Promise<UserDbType | null> {
+
+        let foundUser = await UserModelClass.findOne({"emailConfirmation.confirmationCode": code}).lean()
+
+        if (! foundUser) {
+            return null
+        } else {
+            return foundUser
+        }
+    },
+
+    async findUserByRecoveryCode(recoveryCode: string): Promise<UserWithMongoId | null> {
+
+        let foundUser = await UserModelClass.findOne({"passwordRecovery.recoveryCode": recoveryCode}).lean()
+
+        if (! foundUser) {
+            return null
+        } else {
+            return foundUser
+        }
     },
 
     async findUsers(page: number, limit: number,
@@ -65,15 +87,25 @@ export const usersQueryRepositories = {
         }
     },
 
-    async checkUserByEmail(email: string): Promise<UserDbType | null> {
+    async findUserInfoForEmailSend(userId: string): Promise< UserInfoForEmail | null> {
 
-        let foundUser = await PostModelClass.findOne({"accountData.email": email})
+        const user = await UserModelClass.findById(userId).lean()
 
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
+        if (!user) { return null }
+
+        return {
+            id: user._id.toString(),
+            email: user.accountData.email,
+            confirmationCode: user.emailConfirmation.confirmationCode
         }
+    },
 
+    async findUserByConfirmationCode(code: string): Promise<UserWithMongoId | null> {
+
+        let foundUser = await UserModelClass.findOne(
+            {"emailConfirmation.confirmationCode": code},
+            {__v: 0})
+
+        return foundUser || null
     },
 }

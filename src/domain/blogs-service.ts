@@ -36,7 +36,6 @@ export const blogsService= {
 
 
     async deleteAllBlogs(): Promise<number> {
-
         return await blogsRepository.deleteAllBlogs()
 
     }

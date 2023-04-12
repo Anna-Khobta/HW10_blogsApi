@@ -13,6 +13,8 @@ export const postsService = {
 
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
+        // TODO по идее надо квери вынести в роутер и сюда просто передать имя блога
+
         if (!foundBlogName) { return null }
 
             let newPost: PostTypeWithoutIds = {

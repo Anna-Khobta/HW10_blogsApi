@@ -1,4 +1,4 @@
-import {CommentDBType, CommentViewType, UserDbType} from "../type/types";
+import {CommentDBType, CommentViewType, UserViewType} from "../type/types";
 import {commentsRepositories} from "../repositories/comments-db-repositories";
 import {commentsCollection} from "../repositories/db";
 
@@ -16,11 +16,11 @@ export const commentsService = {
         }
     },
 
-    async createComment(postId: string, content: string, userInfo: UserDbType): Promise<CommentViewType> {
+    async createComment(postId: string, content: string, userInfo: UserViewType): Promise<CommentViewType> {
 
         const commentatorInfo = {
             userId: userInfo.id,
-            userLogin: userInfo.accountData.login
+            userLogin: userInfo.login
         }
 
         const newComment: CommentDBType = {
@@ -37,11 +37,11 @@ export const commentsService = {
     },
 
 
-    async checkUser(userInfo: UserDbType, id: string): Promise<boolean | undefined> {
+    async checkUser(userInfo: UserViewType, id: string): Promise<boolean | undefined> {
 
         const commentatorInfo = {
             userId: userInfo.id,
-            userLogin: userInfo.accountData.login
+            userLogin: userInfo.login
         }
 
         const foundCommentOwner = await commentsCollection.findOne({id: id}, {projection: {_id: 0}})

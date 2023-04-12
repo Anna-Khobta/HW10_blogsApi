@@ -27,7 +27,6 @@ export const blogsRepository = {
     async deleteAllBlogs(): Promise<number> {
         const result = await BlogModelClass.deleteMany({})
         return result.deletedCount
-        // . If any document was deleted, we return true, otherwise, we return false.
     }
 }
 

@@ -51,6 +51,5 @@ export const postsRepositories = {
 async deleteAllPosts(): Promise<number> {
     const result = await PostModelClass.deleteMany({})
     return result.deletedCount
-    // если всё удалит, вернет true
 }
 }

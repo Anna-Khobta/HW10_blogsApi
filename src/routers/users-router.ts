@@ -32,7 +32,7 @@ usersRouter
 
         if (isUserRegisteredInDb) { return res.sendStatus(400) }
 
-        const createdUserId = await usersService.createUser(req.body.login, req.body.email, req.body.password)
+        const createdUserId = await usersService.createUser(req.body.login, req.body.email, req.body.password, true)
 
         if (!createdUserId) {  return res.sendStatus(400) }
 

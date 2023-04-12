@@ -48,7 +48,7 @@ commentsRouter
         if (findCommentById) {
             return res.status(200).send(findCommentById)
         } else {
-            return res.send(404)
+            return res.sendStatus(404)
         }
         })
 

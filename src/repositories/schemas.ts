@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import {PostDbType} from "../type/types";
+import {PostDbType, UserDbType} from "../type/types";
 
 export const blogSchema = new mongoose.Schema({
     id: String,
@@ -18,4 +18,23 @@ export const postSchema = new mongoose.Schema<PostDbType>( {
     blogId: String,
     blogName: String,
     createdAt: String
+})
+
+export const userSchema = new mongoose.Schema<UserDbType>({
+    //id: string,
+    accountData: {
+    login: String,
+        email: String,
+        hashPassword: String,
+        createdAt: String
+},
+emailConfirmation: {
+    confirmationCode: String,
+        expirationDate: Date,
+        isConfirmed: Boolean
+},
+passwordRecovery: {
+    recoveryCode: String || null,
+        exp: Date || null
+    }
 })

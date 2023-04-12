@@ -30,18 +30,6 @@ export type PostViewType = {
 
 }
 
-export type PostTypeWithMongoId = {
-    _id: ObjectId,
-    id: string,
-    title: string,
-    shortDescription: string,
-    content: string,
-    blogId: string,
-    blogName: string,
-    createdAt: string,
-
-}
-
 export type PostTypeWithoutIds = {
     title: string,
     shortDescription: string,
@@ -57,6 +45,14 @@ export type PostsWithPagination = {
     totalCount: number,
     items: PostViewType[]
 }
+
+export type PostDbType = {title: string,
+    shortDescription: string,
+    content: string,
+    blogId: string,
+    blogName: string,
+    createdAt: string}
+
 
 export type CommentDBType = {
     id: string,
@@ -79,15 +75,24 @@ export type CommentViewType = {
     createdAt: string
 }
 
-export type UserViewWhenAdd = {
+
+export type UserViewType = {
     id: string,
     login: string,
     email: string,
     createdAt: string
 }
 
+export type UsersWithPagination = {
+    pagesCount: number,
+    page: number,
+    pageSize: number,
+    totalCount: number,
+    items: UserViewType[]
+}
+
 export type UserDbType = {
-    id: string,
+    //id: string,
     accountData: {
         login: string,
         email: string,
@@ -106,12 +111,33 @@ export type UserDbType = {
     }
 }
 
-export type PostDbType = {title: string,
-    shortDescription: string,
-    content: string,
-    blogId: string,
-    blogName: string,
-    createdAt: string}
+export type UserWithMongoId =  UserDbType & { _id: ObjectId; }
+
+export type UserTypeWiithoutIds = {
+    accountData: {
+        login: string,
+        email: string,
+        hashPassword: string,
+        createdAt: string
+    },
+    emailConfirmation: {
+        confirmationCode: string,
+        expirationDate: Date,
+        isConfirmed: boolean
+    },
+    passwordRecovery: {
+        recoveryCode: string | null,
+        exp: Date | null
+
+    }
+}
+
+export type UserInfoForEmail = {
+    id: string,
+    email: string,
+    confirmationCode: string
+}
+
 
 export type TokenDBType = {
     iat: number,
