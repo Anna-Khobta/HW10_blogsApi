@@ -11,26 +11,16 @@ import {getPagination} from "../functions/pagination";
 
 
 import {usersService} from "../domain/users-service";
-import {usersRepository} from "../repositories/users-db-repositories";
+import {usersQueryRepositories} from "../repositories/users-query-repositories";
 
 export const usersRouter = Router({})
 
 
 
 // get users with filter and pagination
-usersRouter.get('/',
-    authorizationMiddleware,
-    async (req: Request, res: Response) => {
+usersRouter
 
-    const {page, limit, sortDirection, sortBy, searchLoginTerm, searchEmailTerm, skip} = getPagination(req.query)
-
-        const foundUsers = await usersRepository.findUsers(page, limit, sortDirection, sortBy, searchLoginTerm, searchEmailTerm, skip)
-
-        res.status(200).send(foundUsers)
-})
-
-
-usersRouter.post('/',
+    .post('/',
     authorizationMiddleware,
     loginValidation,
     emailValidation,
@@ -38,26 +28,37 @@ usersRouter.post('/',
     inputValidationMiddleware,
     async (req: Request, res: Response) => {
 
-    let checkUserInDb = await usersRepository.checkUser(req.body.login, req.body.email)
+        let isUserRegisteredInDb = await usersQueryRepositories.findUserByLoginOrEmail(req.body.login, req.body.email)
 
-        if (!checkUserInDb) {
-            const newUser = await usersService.createUser(req.body.login, req.body.email, req.body.password)
-            res.status(201).send(newUser)
+        if (isUserRegisteredInDb) { return res.sendStatus(400) }
 
-        } else {
-            return res.send(400)
-        }
-    })
+        const createdUserId = await usersService.createUser(req.body.login, req.body.email, req.body.password)
 
-usersRouter.delete('/:id',
+        if (!createdUserId) {  return res.sendStatus(400) }
+
+       const userView = await usersQueryRepositories.findUserById(createdUserId)
+
+            res.status(201).send(userView)
+
+        })
+
+    .get('/',
+    authorizationMiddleware,
+    async (req: Request, res: Response) => {
+
+    const {page, limit, sortDirection, sortBy, searchLoginTerm, searchEmailTerm, skip} = getPagination(req.query)
+
+        const foundUsers = await usersQueryRepositories.findUsers(page, limit, sortDirection, sortBy, searchLoginTerm, searchEmailTerm, skip)
+
+        res.status(200).send(foundUsers)
+})
+
+    .delete('/:id',
     authorizationMiddleware,
     async (req: Request, res: Response) => {
 
     const isDeleted = await usersService.deleteUser(req.params.id)
 
-        if (isDeleted) {
-            res.send(204)
-        } else {
-            res.send(404)
-        }
+        if (!isDeleted) { return res.send(404) }
+        return res.send(204)
     })

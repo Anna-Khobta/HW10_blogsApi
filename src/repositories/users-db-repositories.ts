@@ -1,6 +1,6 @@
-import { usersCollection} from "./db";
-import {SortDirection} from "mongodb";
-import {UserDbType, UserViewWhenAdd} from "../type/types";
+import {UserModelClass} from "./db";
+import {UserDbType} from "../type/types";
+import {HydratedDocument} from "mongoose";
 
 
 const bcrypt = require('bcryptjs');
@@ -8,17 +8,31 @@ const salt = bcrypt.genSaltSync(5);
 
 export const usersRepository = {
 
-    async checkUser(login: string, email: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({$or: [{"accountData.login": login}, {"accountData.email": email}]})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
+    async save(userInstance: HydratedDocument<UserDbType>): Promise<boolean> {
+        try {
+            await userInstance.save()
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
         }
+    },
+
+
+    async deleteUser(id: string): Promise<boolean> {
+        const userInstance = await UserModelClass.findOne({_id: id})
+        if (!userInstance) return false
+
+        await userInstance.deleteOne()
+        return true
 
     },
+
+    async deleteAllUsers(): Promise<number> {
+        const result = await UserModelClass.deleteMany({})
+        return result.deletedCount
+    },
+
 
     async checkUserByEmail(email: string): Promise<UserDbType | null> {
 
@@ -80,81 +94,6 @@ export const usersRepository = {
 
     },
 
-    async createUser(newUser: UserDbType): Promise<UserViewWhenAdd | null> {
-
-        const insertNewUserInDb = await usersCollection.insertOne(newUser)
-
-        const newUserWithoughtId = await usersCollection.findOne(
-            {id: newUser.id}, {projection: {_id: 0, password: 0,}})
-
-        const returnUserView = {
-            id: newUserWithoughtId!.id,
-            login: newUserWithoughtId!.accountData.login,
-            email: newUserWithoughtId!.accountData.email,
-            createdAt: newUserWithoughtId!.accountData.createdAt
-
-        }
-        return returnUserView
-    },
-
-    async findUsers(page: number,
-                    limit: number,
-                    sortDirection: SortDirection,
-                    sortBy: string,
-                    searchLoginTerm: string,
-                    searchEmailTerm: string,
-                    skip: number) {
-
-        const filter = {
-            $or: [{"accountData.login": {$regex: searchLoginTerm, $options: 'i'}},
-                {"accountData.email": {$regex: searchEmailTerm, $options: 'i'}}]
-        }
-
-        const findUsers = await usersCollection.find(
-            filter,
-            {
-                projection: {
-                    _id: 0,
-                    id: 1,
-                    "accountData.login": 1,
-                    "accountData.email": 1,
-                    "accountData.createdAt": 1
-                }
-            })
-            .sort({[sortBy]: sortDirection})
-            .skip(skip)
-            .limit(limit)
-            .toArray()
-
-        const items = findUsers.map(user => ({
-            id: user.id,
-            login: user.accountData.login,
-            email: user.accountData.email,
-            createdAt: user.accountData.createdAt
-        }));
-
-        const total = await usersCollection.countDocuments(filter)
-
-        const pagesCount = Math.ceil(total / limit)
-
-        return {
-            pagesCount: pagesCount,
-            page: page,
-            pageSize: limit,
-            totalCount: total,
-            items: items
-        }
-    },
-
-    async deleteUser(id: string): Promise<boolean> {
-        const result = await usersCollection.deleteOne({id: id})
-        return result.deletedCount === 1
-    },
-
-    async deleteAllUsers(): Promise<boolean> {
-        const result = await usersCollection.deleteMany({})
-        return result.acknowledged
-    },
 
     async findUserById(userId: string): Promise<UserDbType | null> {
 
@@ -236,3 +175,71 @@ export const usersRepository = {
         return result.modifiedCount === 1
     }
 }
+
+
+
+/*    async createUser(newUser: UserDbType): Promise<UserViewWhenAdd | null> {
+
+        const insertNewUserInDb = await usersCollection.insertOne(newUser)
+
+        const newUserWithoughtId = await usersCollection.findOne(
+            {id: newUser.id}, {projection: {_id: 0, password: 0,}})
+
+        const returnUserView = {
+            id: newUserWithoughtId!.id,
+            login: newUserWithoughtId!.accountData.login,
+            email: newUserWithoughtId!.accountData.email,
+            createdAt: newUserWithoughtId!.accountData.createdAt
+
+        }
+        return returnUserView
+    }*/
+
+/* async findUsers(page: number,
+                 limit: number,
+                 sortDirection: SortDirection,
+                 sortBy: string,
+                 searchLoginTerm: string,
+                 searchEmailTerm: string,
+                 skip: number) {
+
+     const filter = {
+         $or: [{"accountData.login": {$regex: searchLoginTerm, $options: 'i'}},
+             {"accountData.email": {$regex: searchEmailTerm, $options: 'i'}}]
+     }
+
+     const findUsers = await usersCollection.find
+     (filter,
+         {
+             projection: {
+                 _id: 0,
+                 id: 1,
+                 "accountData.login": 1,
+                 "accountData.email": 1,
+                 "accountData.createdAt": 1
+             }
+         })
+         .sort({[sortBy]: sortDirection})
+         .skip(skip)
+         .limit(limit)
+         .toArray()
+
+     const items = findUsers.map(user => ({
+         id: user.id,
+         login: user.accountData.login,
+         email: user.accountData.email,
+         createdAt: user.accountData.createdAt
+     }));
+
+     const total = await usersCollection.countDocuments(filter)
+
+     const pagesCount = Math.ceil(total / limit)
+
+     return {
+         pagesCount: pagesCount,
+         page: page,
+         pageSize: limit,
+         totalCount: total,
+         items: items
+     }
+ },*/

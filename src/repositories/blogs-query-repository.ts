@@ -4,7 +4,9 @@ import {SortOrder} from "mongoose";
 
 
 export const blogsQueryRepository = {
-    async findBlogs(page:number, limit:number, sortDirection: SortOrder, sortBy: string, searchNameTerm:string, skip:number): Promise<BlogsWithPagination> {
+    async findBlogs(page:number, limit:number, sortDirection: SortOrder, sortBy: string, searchNameTerm:string, skip:number):
+        Promise<BlogsWithPagination> {
+
     let findBlogs: BlogType[]  = await BlogModelClass.find(
         { name: { $regex: searchNameTerm, $options: 'i' }},
         {projection: {_id: 0}})
