@@ -1,356 +1,286 @@
 import {app} from "../src/settings";
 import request from "supertest"
-import {BlogType, CommentViewType} from "../src/type/types";
-import {createPostWithBlog, createUser, loginUserGetToken} from "../src/functions/tests-functions";
+import {BlogType} from "../src/type/types";
+import {
+    authLogin,
+    authMe,
+    clearAllDb,
+    createBlog,
+    createComment,
+    createPost,
+    createSeveralItems,
+    createUser,
+    deleteComment,
+    getBlogById,
+    getBlogsWithPagination,
+    getCommentById,
+    getCommentsWithPagination,
+    updateComment
+} from "../src/functions/tests-functions";
 import {client} from "../src/repositories/db";
-import {basicAuth, myEmail, myLogin, myPassword} from "../src/functions/tests-objects";
+import {
+    basicAuth,
+    blogDescription,
+    blogName,
+    blogUrl, commentContent,
+    myEmail,
+    myLogin, myLoginOrEmail,
+    myPassword, postContent, postShortDescription, postTitle
+} from "../src/functions/tests-objects";
+import {MongoClient} from "mongodb";
+import mongoose from "mongoose";
 
 
 
-const auth = {login: 'admin', password: 'qwerty'}
+describe('/Comments', () => {
 
-describe.skip('/', () => {
+    jest.setTimeout(3 * 60 * 1000)
 
     beforeAll(async () => {
-        await request(app).delete('/testing/all-data')
+        const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
+        const client = new MongoClient(mongoUri!)
+        await client.connect()
+        await mongoose.connect(mongoUri!);
+        console.log(" ✅ Connected successfully to mongo db and mongoose");
     })
 
     afterAll(async () => {
         await client.close();
+        await mongoose.disconnect();
+        console.log(" ✅ Closed mongo db and mongoose")
     })
 
-    it('Post, blog, with authorization', async () => {
+    it('Create Post, blog, with basic authorization', async () => {
 
-        const createdResponse = await request(app)
-            .post('/blogs')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "name": "anna",
-                "description": "1 description",
-                "websiteUrl": "1google.com"
-            })
-            .expect(201)
-
-        const createdBlog = createdResponse.body
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
 
         const expectedBlog = {
             id: expect.any(String),
-            name: "anna",
-            description: "1 description",
-            websiteUrl: "1google.com",
-            "createdAt": createdBlog.createdAt,
+            name: expect.any(String),
+            description: expect.any(String),
+            websiteUrl: expect.any(String),
+            createdAt: expect.any(String),
             isMembership: false
         }
 
-        expect(createdBlog).toEqual(expectedBlog)
+        expect(createNewBlog.body).toMatchObject(expectedBlog)
+        expect(createNewBlog.body.createdAt).toMatch(/^20\d{2}(-[01]\d){2}T([0-2]\d):[0-5]\d:[0-5]\d\.\d{3}Z$/)
 
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
 
-        const getResponse = await request(app)
-            .get('/blogs/' + createdBlog.id)
-            .expect(200).send(createdBlog)
+        const expectedPost = {
+            "id": expect.any(String),
+            "title": expect.any(String),
+            "shortDescription": expect.any(String),
+            "content": expect.any(String),
+            "blogId": createNewBlog.body.id,
+            "blogName": createNewBlog.body.name,
+            "createdAt": expect.any(String)
+        }
 
+        expect(createNewPost.body).toMatchObject(expectedPost);
 
-    })
-})
+        expect(createNewPost.body.createdAt).toMatch(/^20\d{2}(-[01]\d){2}T([0-2]\d):[0-5]\d:[0-5]\d\.\d{3}Z$/)
+        expect(createNewPost.body.blogId).toMatch(createNewBlog.body.id)
+        expect(createNewPost.body.blogName).toMatch(createNewBlog.body.name)
 
-describe.skip('/', () => {
+        const getBlog = await getBlogById(createNewBlog.body.id)
+        expect(getBlog.status).toBe(200)
+        expect(getBlog.body).toMatchObject(expectedBlog)
 
-    beforeAll(async () => {
-        await request(app).delete('/testing/all-data')
     })
 
     it('Get, 10 blogs, with pagination', async () => {
 
-        await request(app).delete('/testing/all-data')
+        await clearAllDb()
 
         let blogs: BlogType[] = []
 
         for (let i = 0; i < 10; i++) {
-            const createdResponse1 = await request(app)
+            const createdResponse = await request(app)
                 .post('/blogs')
-                .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
+                .set('Authorization', basicAuth)
                 .send({
                     "name": "Anna",
                     "description": "1 description",
                     "websiteUrl": "1google.com"
                 })
-            blogs.push(createdResponse1.body)
+            blogs.push(createdResponse.body)
         }
 
-        await request(app)
-            .get('/blogs?' + 'sortDirection=asc' + '&pageSize=20' + '&page=2')
-            .expect(200, {
-                "pagesCount": 1,
-                "page": 1,
-                "pageSize": 20,
-                "totalCount": blogs.length,
-                "items": blogs
-            })
-    })
-})
+        const getAllBlogs = await getBlogsWithPagination("sortBy=createdAt",
+            "sortDirection=asc", "pageNumber=2", "pageSize=3")
+        expect(getAllBlogs.status).toBe(200)
 
-describe.skip('/', () => {
+        const expectedBlogsWithPagination = {
+            "pagesCount": expect.any(Number),
+            "page": expect.any(Number),
+            "pageSize": expect.any(Number),
+            "totalCount": expect.any(Number),
+            "items": expect.any(Array)
+        }
+        expect(getAllBlogs.body).toMatchObject(expectedBlogsWithPagination)
 
-    beforeAll(async () => {
-        await request(app).delete('/testing/all-data')
     })
 
-       it('create blog and post, create user, login user, auth with token', async () => {
+    it('create blog and post, create user, login user, auth with token', async () => {
 
-        const createdResponseBlog = await request(app)
-            .post('/blogs')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "name": "Anna",
-                "description": "1 description",
-                "websiteUrl": "1google.com"
-            })
-            .expect(201)
+        await clearAllDb()
 
-        const createdBlog = createdResponseBlog.body
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
 
-        const expectedBlog = {
-            id: expect.any(String),
-            name: "Anna",
-            description: "1 description",
-            websiteUrl: "1google.com",
-            createdAt: createdBlog.createdAt,
-            isMembership: false
-        }
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
 
-        expect(createdBlog).toEqual(expectedBlog)
-
-
-        const createdResponsePost = await request(app)
-            .post('/posts')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "title": "post title",
-                "shortDescription": "post string",
-                "content": "post string",
-                "blogId": createdBlog.id
-            })
-            .expect(201)
-
-        const createdPost = createdResponsePost.body
-
-        const expectedPost = {
-            id: expect.any(String),
-            title: "post title",
-            shortDescription: "post string",
-            content: "post string",
-            blogId: createdBlog.id,
-            blogName: createdBlog.name,
-            createdAt: createdPost.createdAt
-        }
-
-        expect(createdPost).toEqual(expectedPost)
-
-
-        const createdResponseUser = await request(app)
-            .post('/users')
-            .set('Authorization', `Basic ${Buffer.from(`${auth.login}:${auth.password}`).toString('base64')}`)
-            .send({
-                "login": "test12",
-                "password": "test12",
-                "email": "test12@mail.com"
-            })
-            .expect(201)
-
-        const createdUser = createdResponseUser.body
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
 
         const expectedUser = {
             id: expect.any(String),
-            login: "test12",
-            email: "test12@mail.com",
-            createdAt: createdUser.createdAt
+            login: myLogin,
+            email: myEmail,
+            createdAt: expect.any(String)
         }
 
-        expect(createdUser).toEqual(expectedUser)
+        expect(createNewUser.body).toEqual(expectedUser)
 
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
 
-        const tryLogin = await request(app)
-            .post('/auth/login')
-            .send({
-                "loginOrEmail": "test12",
-                "password": "test12"
-            })
-            .expect(200)
+        const createdUserAccessToken = loginMyUser.body.accessToken
+        expect(createdUserAccessToken).not.toBeUndefined()
 
+        console.log(createdUserAccessToken)
 
-        let createdUserToken = tryLogin.body.accessToken
-        expect(createdUserToken).not.toBeUndefined()
-
-
-        // Send a request to a test route with the token in the Authorization header
-        const responseGetInformation = await request(app)
-            .get('/auth/me')
-            .set('Authorization', `Bearer ${createdUserToken}`)
-            .expect(200)
-
-        const authMeResult = responseGetInformation.body
+        const getInfoAboutMe = await authMe(createdUserAccessToken)
+        expect(getInfoAboutMe.status).toBe(200)
 
         const authMeExpected = {
-            email: createdUser.email,
-            login: createdUser.login,
-            userId: createdUser.id
+            email: myEmail,
+            login: myLogin,
+            userId: expectedUser.id
         }
 
-        expect(authMeResult).toEqual(authMeExpected)
+        expect(getInfoAboutMe.body).toEqual(authMeExpected)
 
-    }),
-
-       it('create comment', async () => {
-
-           const createdPost = await createPostWithBlog(app, auth);
-           let postId = createdPost.id
-
-           const createdUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
-
-           const userToken = await loginUserGetToken(app,auth)
-
-
-            const responseGetInformation = await request(app)
-                .get('/auth/me')
-                .set('Authorization', `Bearer ${userToken}`)
-                .expect(200)
-            const authMeResult = responseGetInformation.body
-
-            const createdResponseComment = await request(app)
-                .post('/posts/' + postId + '/comments')
-                .set('Authorization', `Bearer ${userToken}`)
-                .send({
-                    "content": "stringstringstringstringstring"
-                })
-                .expect(201)
-
-            const createdComment = createdResponseComment.body
-
-            const expectedComment = {
-                id: expect.any(String),
-                content: "stringstringstringstringstring",
-                commentatorInfo: {
-                    userId: createdUser.body.id,
-                    userLogin: createdUser.body.login
-                },
-                createdAt: createdComment.createdAt
-            }
-
-            expect(createdComment).toEqual(expectedComment)
-
-
-        }),
-
-       it('update comment, than delete comment', async () => {
-
-           const deleteAll = await request(app)
-               .delete('/testing/all-data')
-               .expect(204)
-
-           const createdPost = await createPostWithBlog(app, auth);
-           let postId = createdPost.id
-
-           const createdUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
-
-           const userToken = await loginUserGetToken(app,auth)
-
-           const responseGetInformation = await request(app)
-               .get('/auth/me')
-               .set('Authorization', `Bearer ${userToken}`)
-               .expect(200)
-           const authMeResult = responseGetInformation.body
-
-           const createdResponseComment = await request(app)
-               .post('/posts/' + postId + '/comments')
-               .set('Authorization', `Bearer ${userToken}`)
-               .send({
-                   "content": "stringstringstringstringstring"
-               })
-               .expect(201)
-
-           const createdComment = createdResponseComment.body
-
-           const expectedComment = {
-               id: expect.any(String),
-               content: "stringstringstringstringstring",
-               commentatorInfo: {
-                   userId: createdUser.body.id,
-                   userLogin: createdUser.body.login
-               },
-               createdAt: createdComment.createdAt
-           }
-
-           expect(createdComment).toEqual(expectedComment)
-
-           let commentId = createdComment.id
-
-           const updateResponseComment = await request(app)
-               .put('/comments/' + commentId)
-               .set('Authorization', `Bearer ${userToken}`)
-               .send({
-                   "content": "updated stringstringstringstringstring"
-               })
-               .expect(204)
-
-           const deleteResponseComment = await request(app)
-               .delete('/comments/' + commentId)
-               .set('Authorization', `Bearer ${userToken}`)
-               .expect(204)
-
-
-       })
-
-})
-
-describe.skip('/', () => {
-
-    beforeAll(async () => {
-        await request(app).delete('/testing/all-data')
     })
 
-    // return comments for special post
+    it('create comment', async () => {
+
+        await clearAllDb()
+
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
+
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
+
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
+
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
+
+        const createdUserAccessToken = loginMyUser.body.accessToken
+
+        const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+        expect(createNewComment.status).toBe(201)
+
+        const expectedComment = {
+            id: expect.any(String),
+            content: commentContent,
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login
+            },
+            createdAt: expect.any(String)
+        }
+
+        expect(createNewComment.body).toEqual(expectedComment)
+
+    })
+
+        it('update comment, than delete comment', async () => {
+
+            await clearAllDb()
+
+            const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+            expect(createNewBlog.status).toBe(201)
+
+            const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+            expect(createNewPost.status).toBe(201)
+
+            const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+            expect(createNewUser.status).toBe(201)
+
+            const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+            expect(loginMyUser.status).toBe(200)
+
+            const createdUserAccessToken = loginMyUser.body.accessToken
+
+            const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+            expect(createNewComment.status).toBe(201)
+
+            const updateNewComment = await updateComment(createNewComment.body.id, createdUserAccessToken)
+            expect(updateNewComment.status).toBe(204)
+
+            const deleteUpdateComment = await deleteComment(createNewComment.body.id, createdUserAccessToken)
+            expect(deleteUpdateComment.status).toBe(204)
+
+            const checkIfCommentDeleted = await getCommentById(createNewComment.body.id)
+            expect(checkIfCommentDeleted.status).toBe(404)
+
+        })
+
     it('return comments for special post with pagination', async () => {
 
-        const createdPost = await createPostWithBlog(app, auth);
-        let postId = createdPost.id
 
-        const createdUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        await clearAllDb()
 
-        const tryLogin = await request(app)
-            .post('/auth/login')
-            .send({
-                "loginOrEmail": "khontaav",
-                "password": "khontaav"
-            })
-            .expect(200)
-        let createdUserToken = tryLogin.body.accessToken
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
 
-        const responseGetInformation = await request(app)
-            .get('/auth/me')
-            .set('Authorization', `Bearer ${createdUserToken}`)
-            .expect(200)
-        const authMeResult = responseGetInformation.body
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
 
-            let comments: CommentViewType[] = []
-            for (let i = 0; i < 13; i++) {
-                const createdResponseComment = await request(app)
-                    .post('/posts/' + postId + '/comments')
-                    .set('Authorization', `Bearer ${createdUserToken}`)
-                    .send({
-                        "content": "stringstringstringstringstring"
-                    })
-                comments.push(createdResponseComment.body)
-            }
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
 
-        await request(app)
-            .get('/posts/'+ postId + '/comments/' + '?'+ 'sortDirection=asc'+ '&pageSize=20'+ '&page=2')
-            .expect(200,{
-                "pagesCount": 1,
-                "page": 1,
-                "pageSize": 20,
-                "totalCount": comments.length,
-                "items": comments
-            })
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
+
+        const url = "/posts/" + createNewPost.body.id + '/comments'
+        const body = {content : commentContent}
+        const auth = "Bearer" + " " + loginMyUser.body.accessToken
+
+        const create13Comments = await createSeveralItems(13, url, body, auth)
+        expect(create13Comments.length).toBe(13)
+
+        const expectedComment = {
+            id: expect.any(String),
+            content: expect.any(String),
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login },
+            createdAt: expect.any(String) }
+
+        expect(create13Comments[1]).toMatchObject(expectedComment)
+
+const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
+    "sortDirection=asc", "pageNumber=2" , "pageSize=3", createNewPost.body.id )
+        expect(getAllCommentsForSpecialPost.status).toBe(200)
+
+        const expectedCommentsWithPagination = {
+            "pagesCount": expect.any(Number),
+            "page": expect.any(Number),
+            "pageSize": expect.any(Number),
+            "totalCount": expect.any(Number),
+            "items": expect.any(Array)
+        }
+        expect(getAllCommentsForSpecialPost.body).toMatchObject(expectedCommentsWithPagination)
+
     })
-
 })

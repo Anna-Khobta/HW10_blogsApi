@@ -7,6 +7,7 @@ import {
     getPostsWithPagination, updatePost
 } from "../src/functions/tests-functions";
 import {
+    basicAuth,
     blogDescription,
     blogName,
     blogUrl,
@@ -64,9 +65,9 @@ describe('Posts', () => {
         expect(createNewPost.body.blogId).toMatch(createNewBlog.body.id)
         expect(createNewPost.body.blogName).toMatch(createNewBlog.body.name)
 
-        const getBlog = await getPostById(createNewPost.body.id)
-        expect(getBlog.status).toBe(200)
-        expect(getBlog.body).toMatchObject(expectedPost)
+        const getPost = await getPostById(createNewPost.body.id)
+        expect(getPost.status).toBe(200)
+        expect(getPost.body).toMatchObject(expectedPost)
 
     })
 
@@ -81,7 +82,7 @@ describe('Posts', () => {
             "content": postContent,
             "blogId": createNewBlog.body.id}
 
-        const create5Posts = await createSeveralItems(5,'/posts', postFullBody)
+        const create5Posts = await createSeveralItems(5,'/posts', postFullBody, basicAuth)
 
         expect(create5Posts.length).toBe(5)
 

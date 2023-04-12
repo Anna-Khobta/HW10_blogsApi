@@ -2,9 +2,7 @@
 import request from 'supertest';
 import {app} from "../src/settings";
 
-import {client} from "../src/repositories/db";
-import {usersRepository} from "../src/repositories/users-db-repositories";
-
+import {client, mongoUri} from "../src/repositories/db";
 import {
     createNewPassword,
     createUser,
@@ -12,19 +10,25 @@ import {
     passwordRecovery, waitSomeSeconds
 } from "../src/functions/tests-functions";
 import {
-    basicAuth,
-    email, myEmail, myLogin, myPassword,
+    basicAuth, myEmail, myLogin, myPassword,
     newPassword, secondEmail
 } from "../src/functions/tests-objects";
+import {usersQueryRepositories} from "../src/repositories/users-query-repositories";
+import mongoose from "mongoose";
 
 describe('Password Recovery', () => {
 
+    jest.setTimeout(3*60*1000)
+
     beforeAll(async () => {
+        await client.connect()
+        await mongoose.connect(mongoUri)
         await request(app).delete('/testing/all-data')
     })
 
     afterAll(async () => {
-        await client.close();
+        await client.connect()
+        await mongoose.connection.close();
     })
 
     /*beforeEach(async () => {
@@ -46,7 +50,7 @@ describe('Password Recovery', () => {
         const sendPasswordRecovery = await passwordRecovery(myEmail)
         expect(sendPasswordRecovery.status).toBe(204)
 
-        const userFromDb = await usersRepository.findUserByEmail(email.email)
+        const userFromDb = await usersQueryRepositories.findUserByLoginOrEmail(null, myEmail)
         expect(userFromDb).not.toBeNull()
 
         const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
@@ -62,7 +66,7 @@ describe('Password Recovery', () => {
         const sendPasswordRecovery = await passwordRecovery(secondEmail)
         expect(sendPasswordRecovery.status).toBe(204)
 
-        const userFromDb = await usersRepository.findUserByEmail(secondEmail)
+        const userFromDb = await usersQueryRepositories.findUserByLoginOrEmail(null, secondEmail)
         expect(userFromDb).toBeNull()
 
     })
@@ -71,7 +75,7 @@ describe('Password Recovery', () => {
 
         const sendPasswordRecovery = await passwordRecovery(myEmail)
 
-        const userFromDb = await usersRepository.findUserByEmail(myEmail)
+        const userFromDb = await usersQueryRepositories.findUserByLoginOrEmail(null, myEmail)
         expect(userFromDb).not.toBeNull()
 
         const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
@@ -107,7 +111,7 @@ describe('Password Recovery', () => {
 
         const sendPasswordRecovery = await passwordRecovery(myEmail)
 
-        const userFromDb = await usersRepository.findUserByEmail(myEmail)
+        const userFromDb = await usersQueryRepositories.findUserByLoginOrEmail(null, myEmail)
         expect(userFromDb).not.toBeNull()
 
         const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
@@ -138,7 +142,7 @@ describe('Password Recovery', () => {
 
         const sendPasswordRecovery = await passwordRecovery(myEmail)
 
-        const userFromDb = await usersRepository.findUserByEmail(myEmail)
+        const userFromDb = await usersQueryRepositories.findUserByLoginOrEmail(null, myEmail)
         expect(userFromDb).not.toBeNull()
 
         const recoveryCode = userFromDb!.passwordRecovery.recoveryCode
@@ -153,7 +157,7 @@ describe('Password Recovery', () => {
 
         const sendPasswordRecovery2 = await passwordRecovery(myEmail)
 
-        const userFromDb2 = await usersRepository.findUserByEmail(myEmail)
+        const userFromDb2 = await usersQueryRepositories.findUserByLoginOrEmail(null, myEmail)
         expect(userFromDb2).not.toBeNull()
 
         const recoveryCode2 = userFromDb2!.passwordRecovery.recoveryCode
