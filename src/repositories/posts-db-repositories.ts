@@ -1,5 +1,5 @@
-import {PostModelClass,} from "./db";
-import {PostDbType} from "../type/types";
+import {PostModelClass,} from "./db/db";
+import {PostDbType} from "./db/types";
 import {HydratedDocument} from "mongoose";
 
 

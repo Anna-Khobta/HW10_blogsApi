@@ -1,5 +1,5 @@
-import {UserDbType, UserInfoForEmail, UsersWithPagination, UserViewType, UserWithMongoId} from "../type/types";
-import {PostModelClass, UserModelClass} from "./db";
+import {UserDbType, UserInfoForEmail, UsersWithPagination, UserViewType, UserWithMongoId} from "./db/types";
+import {PostModelClass, UserModelClass} from "./db/db";
 import {SortOrder} from "mongoose";
 
 export const usersQueryRepositories = {

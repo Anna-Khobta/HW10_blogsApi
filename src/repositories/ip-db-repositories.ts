@@ -1,5 +1,5 @@
-import {ipDbType} from "../type/types";
-import {ipCollection} from "./db";
+import {ipDbType} from "./db/types";
+import {ipCollection} from "./db/db";
 
 
 export const ipDbRepositories = {

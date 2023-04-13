@@ -1,4 +1,4 @@
-import {TokenDBType} from "../type/types";
+import {TokenDBType} from "../repositories/db/types";
 import {tokenRepositories} from "../repositories/token-db-repositories";
 
 export const tokenService= {

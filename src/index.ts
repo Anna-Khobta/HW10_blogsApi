@@ -1,5 +1,5 @@
 import {app} from "./settings";
-import {runDb} from "./repositories/db";
+import {runDb} from "./repositories/db/db";
 
 const port = 5007 || process.env.PORT
 

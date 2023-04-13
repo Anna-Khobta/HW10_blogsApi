@@ -1,5 +1,5 @@
-import {PostModelClass} from "./db";
-import {PostsWithPagination, PostViewType} from "../type/types";
+import {PostModelClass} from "./db/db";
+import {PostsWithPagination, PostViewType} from "./db/types";
 import {SortOrder} from "mongoose";
 
 

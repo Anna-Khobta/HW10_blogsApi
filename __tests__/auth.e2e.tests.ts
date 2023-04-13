@@ -2,7 +2,7 @@
 import request from 'supertest';
 import {app} from "../src/settings";
 
-import {client, mongoUri} from "../src/repositories/db";
+import {client, mongoUri} from "../src/repositories/db/db";
 import {
     createNewPassword,
     createUser,

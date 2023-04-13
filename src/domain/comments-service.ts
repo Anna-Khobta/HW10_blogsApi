@@ -1,6 +1,6 @@
-import {CommentDBType, CommentViewType, UserViewType} from "../type/types";
+import {CommentDBType, CommentViewType, UserViewType} from "../repositories/db/types";
 import {commentsRepositories} from "../repositories/comments-db-repositories";
-import {commentsCollection} from "../repositories/db";
+import {commentsCollection} from "../repositories/db/db";
 
 export const commentsService = {
 

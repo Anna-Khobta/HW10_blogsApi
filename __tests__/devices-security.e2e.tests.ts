@@ -14,7 +14,7 @@ import {
     myPassword, secondEmail, secondLogin,
     userLoginPassEmail
 } from "../src/functions/tests-objects";
-import {client} from "../src/repositories/db";
+import {client} from "../src/repositories/db/db";
 
 
 

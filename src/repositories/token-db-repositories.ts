@@ -1,5 +1,5 @@
-import {deviceViewType, TokenDBType} from "../type/types";
-import {tokensCollection} from "./db";
+import {deviceViewType, TokenDBType} from "./db/types";
+import {tokensCollection} from "./db/db";
 
 
 export const tokenRepositories = {

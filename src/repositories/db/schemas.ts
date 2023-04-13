@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import {PostDbType, UserDbType} from "../type/types";
+import {PostDbType, UserDbType} from "./types";
 
 export const blogSchema = new mongoose.Schema({
     id: String,

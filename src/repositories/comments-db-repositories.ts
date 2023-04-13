@@ -1,6 +1,6 @@
-import {commentsCollection} from "./db";
+import {commentsCollection} from "./db/db";
 
-import {CommentDBType} from "../type/types";
+import {CommentDBType} from "./db/types";
 
 
 export const commentsRepositories = {

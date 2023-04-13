@@ -15,33 +15,31 @@ commentsRouter
         authBearerMiddleware,
         contentCommentValidation,
         inputValidationMiddleware,
-        async (req: Request, res:Response) => {
-
+        async (req: Request, res: Response) => {
 
             const userInfo = req.user
 
             const checkUserOwnComment = await commentsService.checkUser(userInfo!, req.params.id)
 
-            const updatedCommentWithoughtId = await commentsService.updateComment(req.params.id, req.body.content)
+            const updatedCommentWithoutId = await commentsService.updateComment(req.params.id, req.body.content)
 
-            if (updatedCommentWithoughtId) {
-
+            if (updatedCommentWithoutId) {
+                // TODO переделать в отрицание
                 if (checkUserOwnComment) {
 
                     res.sendStatus(204)
 
-            } else {
-                res.sendStatus(403)
-            }
+                } else {
+                    res.sendStatus(403)
+                }
 
             } else {
                 return res.sendStatus(404)
             }
-
         })
 
     //return comment by id
-    .get("/:id/", async (req: Request, res:Response) => {
+    .get("/:id/", async (req: Request, res: Response) => {
 
         const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
 
@@ -50,16 +48,16 @@ commentsRouter
         } else {
             return res.sendStatus(404)
         }
-        })
+    })
 
     //delete comment by id
     .delete("/:id",
         authBearerMiddleware,
-        async (req: Request, res:Response) => {
+        async (req: Request, res: Response) => {
 
-        const userInfo = req.user
+            const userInfo = req.user
 
-        const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
+            const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
 
             if (findCommentById) {
 
@@ -70,7 +68,7 @@ commentsRouter
 
                     const isDeleted = await commentsService.deleteComment(req.params.id)
 
-                   return res.sendStatus(204)
+                    return res.sendStatus(204)
 
                 } else {
                     return res.sendStatus(403)

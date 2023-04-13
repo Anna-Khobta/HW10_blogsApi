@@ -1,6 +1,6 @@
 import {SortDirection} from "mongodb";
-import {commentsCollection} from "./db";
-import {CommentDBType} from "../type/types";
+import {commentsCollection} from "./db/db";
+import {CommentDBType} from "./db/types";
 
 
 export const commentsQueryRepositories = {

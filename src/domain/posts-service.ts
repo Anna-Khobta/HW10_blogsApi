@@ -1,8 +1,8 @@
 import {postsRepositories} from "../repositories/posts-db-repositories";
-import {PostTypeWithoutIds} from "../type/types";
+import {PostTypeWithoutIds} from "../repositories/db/types";
 import {blogsQueryRepository} from "../repositories/blogs-query-repository";
 import {postsQueryRepositories} from "../repositories/posts-query-repositories";
-import {PostModelClass} from "../repositories/db";
+import {PostModelClass} from "../repositories/db/db";
 
 
 

@@ -1,5 +1,5 @@
-import {UserModelClass} from "./db";
-import {UserDbType} from "../type/types";
+import {UserModelClass} from "./db/db";
+import {UserDbType} from "./db/types";
 import {HydratedDocument} from "mongoose";
 
 

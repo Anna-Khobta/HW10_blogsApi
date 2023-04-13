@@ -1,5 +1,5 @@
 import {MongoClient} from "mongodb";
-import {CommentDBType, ipDbType, TokenDBType} from "../type/types";
+import {CommentDBType, ipDbType, TokenDBType} from "./types";
 
 import mongoose from 'mongoose'
 import {blogSchema, postSchema, userSchema} from "./schemas";

@@ -1,6 +1,6 @@
 import {app} from "../src/settings";
 import request from "supertest"
-import {BlogType} from "../src/type/types";
+import {BlogType} from "../src/repositories/db/types";
 import {
     authLogin,
     authMe,
@@ -17,7 +17,7 @@ import {
     getCommentsWithPagination,
     updateComment
 } from "../src/functions/tests-functions";
-import {client} from "../src/repositories/db";
+import {client} from "../src/repositories/db/db";
 import {
     basicAuth,
     blogDescription,

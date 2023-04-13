@@ -1,5 +1,5 @@
-import {BlogsWithPagination, BlogType} from "../type/types";
-import {BlogModelClass} from "./db";
+import {BlogsWithPagination, BlogType} from "./db/types";
+import {BlogModelClass} from "./db/db";
 import {SortOrder} from "mongoose";
 
 

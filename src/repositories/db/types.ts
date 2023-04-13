@@ -36,7 +36,8 @@ export type PostTypeWithoutIds = {
     content: string,
     blogId: string,
     blogName: string,
-    createdAt: string,}
+    createdAt: string,
+}
 
 export type PostsWithPagination = {
     pagesCount: number,
@@ -46,12 +47,14 @@ export type PostsWithPagination = {
     items: PostViewType[]
 }
 
-export type PostDbType = {title: string,
+export type PostDbType = {
+    title: string,
     shortDescription: string,
     content: string,
     blogId: string,
     blogName: string,
-    createdAt: string}
+    createdAt: string
+}
 
 
 export type CommentDBType = {
@@ -111,7 +114,7 @@ export type UserDbType = {
     }
 }
 
-export type UserWithMongoId =  UserDbType & { _id: ObjectId; }
+export type UserWithMongoId = UserDbType & { _id: ObjectId; }
 
 export type UserTypeWiithoutIds = {
     accountData: {

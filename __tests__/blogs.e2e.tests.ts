@@ -4,7 +4,7 @@ import {
     blogName, blogUrl
 } from "../src/functions/tests-objects";
 import mongoose from "mongoose";
-import {client, mongoUri} from "../src/repositories/db";
+import {client, mongoUri} from "../src/repositories/db/db";
 import {app} from "../src/settings";
 import request from "supertest";
 
