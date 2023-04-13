@@ -18,8 +18,6 @@ export const postsService = {
         if (!foundBlogName) { return null }
 
             let newPost: PostTypeWithoutIds = {
-                // _id: new ObjectId(),
-                //id: " ",
                 title: title,
                 shortDescription: shortDescription,
                 content: content,
@@ -28,14 +26,10 @@ export const postsService = {
                 createdAt: (new Date()).toISOString(),
             }
 
-            //const newPostInDb = await postsRepositories.createPost(newPost)
-
         const postInstance = new PostModelClass(newPost)
         await postsRepositories.save(postInstance)
 
-        const createdId = postInstance._id.toString()
-
-            return createdId
+            return postInstance._id.toString()
     },
 
     async updatePost(postId: string, title: string, shortDescription: string, content: string,
