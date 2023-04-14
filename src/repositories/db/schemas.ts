@@ -38,3 +38,4 @@ passwordRecovery: {
         exp: Date || null
     }
 })
+

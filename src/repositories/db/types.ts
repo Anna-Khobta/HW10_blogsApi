@@ -61,12 +61,29 @@ export type CommentDBType = {
     id: string,
     postId: string
     content: string,
+    createdAt: string,
     commentatorInfo: {
         userId: string,
         userLogin: string
     },
+    likesInfo: {
+        likesCount: number | 0,
+        usersPutLikes: UserLikeInfo[] | null,
+    },
+    dislikesInfo: {
+        dislikesCount: number | 0
+        usersPutDislikes: UserLikeInfo[] | null,
+    }
+}
+
+export type UserLikeInfo = {
+    userId: string,
     createdAt: string
 }
+
+
+export type LikeStatusType = "Like" | "Dislike" | "None"
+
 
 export type CommentViewType = {
     id: string,

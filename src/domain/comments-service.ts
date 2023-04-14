@@ -1,10 +1,11 @@
-import {CommentDBType, CommentViewType, UserViewType} from "../repositories/db/types";
+import {CommentDBType, CommentViewType, LikeStatusType, UserLikeInfo, UserViewType} from "../repositories/db/types";
 import {commentsRepositories} from "../repositories/comments-db-repositories";
 import {commentsCollection} from "../repositories/db/db";
+import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
 
 export const commentsService = {
 
-    _mapCommentFromDBToViewType (comment: CommentDBType): CommentViewType{
+    _mapCommentFromDBToViewType(comment: CommentDBType): CommentViewType {
         return {
             id: comment.id,
             content: comment.content,
@@ -23,16 +24,27 @@ export const commentsService = {
             userLogin: userInfo.login
         }
 
+        const likesInfo = {
+            likesCount: 0,
+            usersPutLikes: null
+        }
+
+        const dislikesInfo = {
+            dislikesCount: 0,
+            usersPutDislikes: null
+        }
+
         const newComment: CommentDBType = {
             id: (+(new Date())).toString(),
             postId,
             content: content,
             commentatorInfo: commentatorInfo,
-            createdAt: (new Date()).toISOString()
+            createdAt: (new Date()).toISOString(),
+            likesInfo: likesInfo,
+            dislikesInfo: dislikesInfo
         }
         const newCommentToDb = await commentsRepositories.createComment(newComment)
         return this._mapCommentFromDBToViewType(newCommentToDb)
-
 
     },
 
@@ -74,6 +86,69 @@ export const commentsService = {
 
     async deleteAllComments(): Promise<boolean> {
         return commentsRepositories.deleteAllComments()
+
+    },
+
+    async createLikeStatus(userInfo: UserViewType, comment: CommentDBType , likeStatus: LikeStatusType): Promise<boolean> {
+
+        const userLikeInfo: UserLikeInfo = {
+            userId: userInfo.id,
+            createdAt: (new Date()).toISOString(),
+        }
+
+        let likes = comment.likesInfo.likesCount
+        let dislikes = comment.dislikesInfo.dislikesCount
+
+        const checkIfUserHaveAlreadyPurLike = await commentsQueryRepositories.checkUserLike(userInfo.id)
+
+        if (checkIfUserHaveAlreadyPurLike === null)  {
+            switch (likeStatus) {
+                case "Like":
+                    likes++;
+                    break;
+                case "Dislike":
+                    dislikes++;
+                    break;
+                default:
+                    break;
+            }
+            const addUserLikeInfoInComment = await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+        }
+
+
+        if (checkIfUserHaveAlreadyPurLike === "Like") {
+            switch (likeStatus) {
+                case "Like":
+                    break;
+                case "Dislike":
+                    likes--;
+                    dislikes++;
+                    const deleteUserInfoLike = await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
+                    const addUserInfoDislike = await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (checkIfUserHaveAlreadyPurLike === "Dislike") {
+            switch (likeStatus) {
+                case "Like":
+                    likes++;
+                    dislikes--;
+                    const deleteUserInfoLike = await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
+                    const addUserInfoDislike = await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+                    break;
+                case "Dislike":
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        await commentsRepositories.updateLikesInComment(comment.id, likes, dislikes)
+
+        return true
 
     }
 }

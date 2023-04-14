@@ -1,6 +1,6 @@
 import {SortDirection} from "mongodb";
 import {commentsCollection} from "./db/db";
-import {CommentDBType} from "./db/types";
+import {CommentDBType, LikeStatusType} from "./db/types";
 
 
 export const commentsQueryRepositories = {
@@ -33,10 +33,24 @@ export const commentsQueryRepositories = {
 
         const foundComment: CommentDBType | null = await commentsCollection.findOne({id: id}, {projection: {_id: 0, postId: 0}})
         return foundComment
-        // if (foundComment) {
-        //     return foundComment
-        // } else {
-        //     return null
-        // }
+    },
+
+    async checkUserLike (id: string): Promise< LikeStatusType | null> {
+
+        const checkUserLikeInComment = await commentsCollection.findOne(
+            { "likesInfo.usersPutLikes.UserLikeInfo.userId": id})
+
+        if (checkUserLikeInComment) {
+            return "Like"
+        }
+
+        const checkUserDislikeInComment = await commentsCollection.findOne(
+                { "dislikesInfo.usersPutDislikes.UserLikeInfo.userId": id})
+
+        if (checkUserDislikeInComment) {
+            return "Dislike"
+        }
+
+        return null
     }
 }

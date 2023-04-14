@@ -4,6 +4,7 @@ import {commentsService} from "../domain/comments-service";
 import {contentCommentValidation} from "../middlewares/comments-validation";
 import {inputValidationMiddleware} from "../middlewares/input-validation-middleware";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
+import {CommentDBType, LikeStatusType, UserViewType} from "../repositories/db/types";
 
 
 export const commentsRouter = Router()
@@ -76,5 +77,32 @@ commentsRouter
             } else {
                 return res.send(404)
             }
+        })
+
+
+
+//Make like/unlike/dislike/undislike operation
+    .put('/:commentId/like-status',
+        authBearerMiddleware,
+        async (req: Request, res: Response) => {
+
+            const userInfo = req.user // id юзера, который залогинен и хочет лайкнуть
+            const likeStatus = req.body.likeStatus
+
+            const findCommentById = await commentsQueryRepositories.findCommentById(req.params.commentId)
+
+            console.log(findCommentById)
+
+            if (!findCommentById) {
+                return res.sendStatus(404)
+            }
+
+            const updateLikeStatus = await commentsService.createLikeStatus(userInfo, findCommentById, likeStatus)
+
+            if (!updateLikeStatus) {
+                return res.sendStatus(400)}
+
+            return res.sendStatus(204)
 
         })
+
