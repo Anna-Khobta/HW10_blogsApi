@@ -57,13 +57,13 @@ export const commentsRepositories = {
             if (likeStatus === "Like") {
                 const updatedComment = await commentsCollection.updateOne({id: commentId},
                     {$push: {"likesInfo.usersPutLikes": userLikeInfo}})
-                return updatedComment.matchedCount === 1
+                return true
             }
 
             if (likeStatus === "Dislike") {
                 const updatedComment = await commentsCollection.updateOne({id: commentId},
                     {$push: {"dislikesInfo.usersPutDislikes": userLikeInfo}})
-                return updatedComment.matchedCount === 1
+                return true
             } else {
                 return false
             }

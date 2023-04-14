@@ -1,10 +1,9 @@
-import {authBearerMiddleware} from "../middlewares/authToken";
+import {authBearerFindUser, authBearerMiddleware} from "../middlewares/authToken";
 import {Request, Response, Router} from "express";
 import {commentsService} from "../domain/comments-service";
 import {contentCommentValidation} from "../middlewares/comments-validation";
 import {inputValidationMiddleware} from "../middlewares/input-validation-middleware";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
-import {CommentDBType, LikeStatusType, UserViewType} from "../repositories/db/types";
 
 
 export const commentsRouter = Router()
@@ -40,16 +39,36 @@ commentsRouter
         })
 
     //return comment by id
-    .get("/:id/", async (req: Request, res: Response) => {
+    .get("/:id/",
+        authBearerFindUser,
+        async (req: Request, res: Response) => {
+
+        const userInfo = req.user
 
         const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
 
-        if (findCommentById) {
-            return res.status(200).send(findCommentById)
-        } else {
-            return res.sendStatus(404)
-        }
-    })
+            if (!findCommentById) return res.sendStatus(404)
+
+        const checkUserStatus = await commentsQueryRepositories.checkUserLike(userInfo.id)
+
+            console.log(checkUserStatus)
+
+            return res.status(200).send(
+                    {
+                        "id": findCommentById.id,
+                        "content": findCommentById.content,
+                        "commentatorInfo": {
+                            "userId": findCommentById.commentatorInfo.userId,
+                            "userLogin": findCommentById.commentatorInfo.userLogin,
+                        },
+                        "createdAt": findCommentById.createdAt,
+                        "likesInfo": {
+                            "likesCount": findCommentById.likesInfo.likesCount,
+                            "dislikesCount": findCommentById.dislikesInfo.dislikesCount,
+                            "myStatus": checkUserStatus
+                        }
+                    })
+            })
 
     //delete comment by id
     .delete("/:id",
@@ -91,7 +110,6 @@ commentsRouter
 
             const findCommentById = await commentsQueryRepositories.findCommentById(req.params.commentId)
 
-            console.log(findCommentById)
 
             if (!findCommentById) {
                 return res.sendStatus(404)

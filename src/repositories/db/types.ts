@@ -68,11 +68,11 @@ export type CommentDBType = {
     },
     likesInfo: {
         likesCount: number | 0,
-        usersPutLikes: UserLikeInfo[] | null,
+        usersPutLikes: UserLikeInfo[],
     },
     dislikesInfo: {
         dislikesCount: number | 0
-        usersPutDislikes: UserLikeInfo[] | null,
+        usersPutDislikes: UserLikeInfo[],
     }
 }
 

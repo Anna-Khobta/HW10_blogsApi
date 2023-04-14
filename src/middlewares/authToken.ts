@@ -23,8 +23,28 @@ export const authBearerMiddleware = async (req: Request, res: Response, next: Ne
     req.user = user
     next()
 
+}
+
+
+export const authBearerFindUser = async (req: Request, res: Response, next: NextFunction) => {
+
+    const auth = req.headers.authorization
+
+    if (!auth) { return null }
+
+    const tokenFromHead = auth.split(' ')[1]
+
+    const userId = await jwtService.getUserIdByToken(tokenFromHead)
+
+    if (!userId) { return null }
+    const user = await usersService.findUserById(userId.toString())
+
+    if (!user) { return null }
+    req.user = user
+    next()
 
 }
+
 
 
 /*

@@ -26,12 +26,12 @@ export const commentsService = {
 
         const likesInfo = {
             likesCount: 0,
-            usersPutLikes: null
+            usersPutLikes: []
         }
 
         const dislikesInfo = {
             dislikesCount: 0,
-            usersPutDislikes: null
+            usersPutDislikes: []
         }
 
         const newComment: CommentDBType = {
@@ -101,7 +101,9 @@ export const commentsService = {
 
         const checkIfUserHaveAlreadyPurLike = await commentsQueryRepositories.checkUserLike(userInfo.id)
 
-        if (checkIfUserHaveAlreadyPurLike === null)  {
+        console.log(checkIfUserHaveAlreadyPurLike)
+
+        if (checkIfUserHaveAlreadyPurLike === "None")  {
             switch (likeStatus) {
                 case "Like":
                     likes++;
