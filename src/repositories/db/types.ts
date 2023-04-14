@@ -76,6 +76,7 @@ export type CommentDBType = {
     }
 }
 
+
 export type UserLikeInfo = {
     userId: string,
     createdAt: string
@@ -92,8 +93,15 @@ export type CommentViewType = {
         userId: string,
         userLogin: string
     },
-    createdAt: string
+    createdAt: string,
+    likesInfo: {
+        likesCount: number,
+        dislikesCount: number,
+        myStatus: LikeStatusType
+    }
 }
+
+
 
 
 export type UserViewType = {
