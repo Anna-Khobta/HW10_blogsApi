@@ -6,6 +6,10 @@ export const blogName = "AnnaBlog"
 export const blogDescription = "AnnaBlog Description"
 export const blogUrl = "annablog.com"
 
+export const blogSecondName = "AnnaBlog2"
+export const blogSecondDescription = "AnnaBlog2 Description"
+export const blogSecondUrl = "annablog2.com"
+
 
 
 export const postTitle = "AnnaTitle"
@@ -27,11 +31,13 @@ export const myEmail = "nakanai.x@gmail.com"
 export const secondEmail = 'ana14i88@gmail.com'
 
 export const myLoginOrEmail = "nakanai"
+export const secondLoginOrEmail = "nakanai1"
 
 export const commentContent = "Hello! Here is some content"
 export const secondCommentContent = "Updated some content"
 
 export const likeStatusisLike = "Like"
+export const likeStatusisDisLike = "Dislike"
 
 
 export const fourBrowsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',

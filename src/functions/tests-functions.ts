@@ -280,6 +280,16 @@ export const getCommentById = async (commentId: string) => {
 
 }
 
+
+export const getNewCommentWithLike = async (commentId: string, userAccessToken: string) => {
+
+    return request(app)
+        .get('/comments/' + commentId)
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+
+}
+
+
 export const getCommentsWithPagination =
     async (sortBy:string|null,
            sortDirection: string|null,

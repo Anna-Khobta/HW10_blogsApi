@@ -14,7 +14,7 @@ import {
     getBlogById,
     getBlogsWithPagination,
     getCommentById,
-    getCommentsWithPagination,
+    getCommentsWithPagination, getNewCommentWithLike,
     updateComment, updateCommentLikeStatus
 } from "../src/functions/tests-functions";
 import {client} from "../src/repositories/db/db";
@@ -22,10 +22,23 @@ import {
     basicAuth,
     blogDescription,
     blogName,
-    blogUrl, commentContent, likeStatusisLike,
+    blogSecondDescription,
+    blogSecondName,
+    blogSecondUrl,
+    blogUrl,
+    commentContent, likeStatusisDisLike,
+    likeStatusisLike,
     myEmail,
-    myLogin, myLoginOrEmail,
-    myPassword, postContent, postShortDescription, postTitle
+    myLogin,
+    myLoginOrEmail,
+    myPassword, newPassword,
+    postContent,
+    postNewContent,
+    postNewShortDescription,
+    postNewTitle,
+    postShortDescription,
+    postTitle, secondEmail,
+    secondLogin, secondLoginOrEmail
 } from "../src/functions/tests-objects";
 import {MongoClient} from "mongodb";
 import mongoose from "mongoose";
@@ -329,9 +342,66 @@ describe('/Comments, Likes', () => {
         const updateNewComment = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, likeStatusisLike)
         expect(updateNewComment.status).toBe(204)
 
+        const getNewComment = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
+        expect(getNewComment.status).toBe(200)
+
+        const expectedComment = {
+            id: createNewComment.body.id,
+            content: createNewComment.body.content,
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login
+            },
+            createdAt: createNewComment.body.createdAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 0,
+                "myStatus": likeStatusisLike
+            }
+        }
+
+        expect(getNewComment.body).toMatchObject(expectedComment)
+
+
+
+        const createNewBlog2 = await createBlog(blogSecondName, blogSecondDescription, blogSecondUrl)
+        expect(createNewBlog2.status).toBe(201)
+
+        const createNewPost2 = await createPost(postNewTitle, postNewShortDescription, postNewContent, createNewBlog2.body.id)
+        expect(createNewPost2.status).toBe(201)
+
+        const createNewUser2 = await createUser(secondLogin, newPassword, secondEmail, basicAuth)
+        expect(createNewUser2.status).toBe(201)
+
+        const loginMyUser2 = await authLogin(secondLoginOrEmail, newPassword)
+        expect(loginMyUser2.status).toBe(200)
+
+        const createdUserAccessToken2 = loginMyUser2.body.accessToken
+
+        const updateNewComment2 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken2, likeStatusisDisLike)
+        expect(updateNewComment2.status).toBe(204)
+
+        const getNewComment2 = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken2)
+        expect(getNewComment2.status).toBe(200)
+
+        const expectedComment2 = {
+            id: createNewComment.body.id,
+            content: createNewComment.body.content,
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login
+            },
+            createdAt: createNewComment.body.createdAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 1,
+                "myStatus": likeStatusisDisLike
+            }
+        }
+
+        expect(getNewComment2.body).toMatchObject(expectedComment2)
+
     })
 })
-
-
 
 
