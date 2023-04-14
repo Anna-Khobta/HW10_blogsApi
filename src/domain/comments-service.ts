@@ -13,7 +13,12 @@ export const commentsService = {
                 userId: comment.commentatorInfo.userId,
                 userLogin: comment.commentatorInfo.userLogin
             },
-            createdAt: comment.createdAt
+            createdAt: comment.createdAt,
+            likesInfo: {
+                likesCount: comment.likesInfo.likesCount,
+                dislikesCount: comment.dislikesInfo.dislikesCount,
+                myStatus: "None"
+            }
         }
     },
 
@@ -114,7 +119,7 @@ export const commentsService = {
                 default:
                     break;
             }
-            const addUserLikeInfoInComment = await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+            await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
         }
 
 
@@ -125,8 +130,8 @@ export const commentsService = {
                 case "Dislike":
                     likes--;
                     dislikes++;
-                    const deleteUserInfoLike = await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
-                    const addUserInfoDislike = await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+                    await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
+                    await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
                     break;
                 default:
                     break;
@@ -138,8 +143,8 @@ export const commentsService = {
                 case "Like":
                     likes++;
                     dislikes--;
-                    const deleteUserInfoLike = await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
-                    const addUserInfoDislike = await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+                    await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
+                    await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
                     break;
                 case "Dislike":
                     break;

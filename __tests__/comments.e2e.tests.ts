@@ -339,6 +339,23 @@ describe('/Comments, Likes', () => {
         const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
         expect(createNewComment.status).toBe(201)
 
+        expect(createNewComment.body).toMatchObject(
+            {
+                id: createNewComment.body.id,
+                content: createNewComment.body.content,
+                commentatorInfo: {
+                    userId: createNewUser.body.id,
+                    userLogin: createNewUser.body.login
+                },
+                createdAt: createNewComment.body.createdAt,
+                likesInfo: {
+                    "likesCount": 0,
+                    "dislikesCount": 0,
+                    "myStatus": "None"
+                }
+            }
+        )
+
         const updateNewComment = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, likeStatusisLike)
         expect(updateNewComment.status).toBe(204)
 
@@ -361,8 +378,6 @@ describe('/Comments, Likes', () => {
         }
 
         expect(getNewComment.body).toMatchObject(expectedComment)
-
-
 
         const createNewBlog2 = await createBlog(blogSecondName, blogSecondDescription, blogSecondUrl)
         expect(createNewBlog2.status).toBe(201)
@@ -400,8 +415,10 @@ describe('/Comments, Likes', () => {
         }
 
         expect(getNewComment2.body).toMatchObject(expectedComment2)
-
     })
+
+
 })
+
 
 
