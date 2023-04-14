@@ -1,5 +1,3 @@
-import exp from "constants";
-
 
 export const auth = {login: 'admin', password: 'qwerty'}
 export const basicAuth = "Basic YWRtaW46cXdlcnR5"
@@ -32,6 +30,8 @@ export const myLoginOrEmail = "nakanai"
 
 export const commentContent = "Hello! Here is some content"
 export const secondCommentContent = "Updated some content"
+
+export const likeStatusisLike = "Like"
 
 
 export const fourBrowsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',

@@ -1,13 +1,14 @@
 import express from "express";
 import request from "supertest";
 import {
-    basicAuth, blogDescription, blogName,
-    blogNameDescriptionUrl, blogUrl,
+    basicAuth,
+    blogNameDescriptionUrl,
     commentContent,
-    loginOrEmailPassw, myEmail, myLogin, myLoginOrEmail, myPassword, postContent, postShortDescription, postTitle,
+    loginOrEmailPassw,
     secondCommentContent
 } from "./tests-objects";
 import {app} from "../settings";
+import {LikeStatusType} from "../repositories/db/types";
 
 
 
@@ -272,22 +273,6 @@ export const createComment = async (postId: string, userAccessToken: string) => 
             "content": commentContent
         })
 }
-export const updateComment = async (commentId: string, userAccessToken: string) => {
-
-    return request(app)
-        .put('/comments/' + commentId)
-        .set('Authorization', "Bearer" + " " + userAccessToken)
-        .send({
-            "content": secondCommentContent
-        })
-}
-
-export const deleteComment = async (commentId: string, userAccessToken: string) => {
-
-    return request(app)
-        .delete('/comments/' + commentId)
-        .set('Authorization', "Bearer" + " " + userAccessToken)
-}
 
 export const getCommentById = async (commentId: string) => {
     return request(app)
@@ -304,6 +289,33 @@ export const getCommentsWithPagination =
 
     return request(app)
         .get('/posts/' + postId + "/comments/" + "?" + sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+}
+
+export const updateComment = async (commentId: string, userAccessToken: string) => {
+
+    return request(app)
+        .put('/comments/' + commentId)
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .send({
+            "content": secondCommentContent
+        })
+}
+
+export const updateCommentLikeStatus = async (commentId: string, userAccessToken: string, likeStatus: LikeStatusType) => {
+
+    return request(app)
+        .put('/comments/' + commentId + '/like-status')
+        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .send({
+            "likeStatus": likeStatus
+        })
+}
+
+export const deleteComment = async (commentId: string, userAccessToken: string) => {
+
+    return request(app)
+        .delete('/comments/' + commentId)
+        .set('Authorization', "Bearer" + " " + userAccessToken)
 }
 
 

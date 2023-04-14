@@ -15,14 +15,14 @@ import {
     getBlogsWithPagination,
     getCommentById,
     getCommentsWithPagination,
-    updateComment
+    updateComment, updateCommentLikeStatus
 } from "../src/functions/tests-functions";
 import {client} from "../src/repositories/db/db";
 import {
     basicAuth,
     blogDescription,
     blogName,
-    blogUrl, commentContent,
+    blogUrl, commentContent, likeStatusisLike,
     myEmail,
     myLogin, myLoginOrEmail,
     myPassword, postContent, postShortDescription, postTitle
@@ -284,3 +284,54 @@ const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=cre
 
     })
 })
+
+
+
+describe('/Comments, Likes', () => {
+
+    jest.setTimeout(3 * 60 * 1000)
+
+    beforeAll(async () => {
+        const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
+        const client = new MongoClient(mongoUri!)
+        await client.connect()
+        await mongoose.connect(mongoUri!);
+        console.log(" ✅ Connected successfully to mongo db and mongoose");
+    })
+
+    afterAll(async () => {
+        await client.close();
+        await mongoose.disconnect();
+        console.log(" ✅ Closed mongo db and mongoose")
+    })
+
+    it('Create Comment, Like comment', async () => {
+
+        await clearAllDb()
+
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
+
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
+
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
+
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
+
+        const createdUserAccessToken = loginMyUser.body.accessToken
+
+        const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+        expect(createNewComment.status).toBe(201)
+
+        const updateNewComment = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, likeStatusisLike)
+        expect(updateNewComment.status).toBe(204)
+
+    })
+})
+
+
+
+
