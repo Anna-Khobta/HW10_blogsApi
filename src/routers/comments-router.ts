@@ -39,21 +39,24 @@ commentsRouter
         })
 
     //return comment by id
-    .get("/:id/",
+    .get("/:id",
+        //checkRefreshToken,
         authBearerFindUser,
+        //authBearerMiddleware,
+
         async (req: Request, res: Response) => {
 
-        const userInfo = req.user
+            const userInfo = req.user
+            console.log(userInfo)
+
 
         const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
+            if (!findCommentById) {
+                return res.sendStatus(400)
+            }
 
-            if (!findCommentById) return res.sendStatus(404)
-
-        const checkUserStatus = await commentsQueryRepositories.checkUserLike(userInfo.id)
-
-            console.log(checkUserStatus)
-
-            return res.status(200).send(
+            if (!userInfo) {
+                return res.status(200).send(
                     {
                         "id": findCommentById.id,
                         "content": findCommentById.content,
@@ -65,9 +68,30 @@ commentsRouter
                         "likesInfo": {
                             "likesCount": findCommentById.likesInfo.likesCount,
                             "dislikesCount": findCommentById.dislikesInfo.dislikesCount,
-                            "myStatus": checkUserStatus
+                            "myStatus": "None"
                         }
                     })
+            } else {
+                const checkUserStatus = await commentsQueryRepositories.checkUserLike(findCommentById.id, userInfo.id)
+
+                return res.status(200).send(
+                    {
+                        "id": findCommentById.id,
+                        "content": findCommentById.content,
+                        "commentatorInfo": {
+                            "userId": findCommentById.commentatorInfo.userId,
+                            "userLogin": findCommentById.commentatorInfo.userLogin,
+                        },
+                        "createdAt": findCommentById.createdAt,
+                        "likesInfo": {
+                            "likesCount": findCommentById.likesInfo.likesCount,
+                            "dislikesCount": findCommentById.dislikesInfo.dislikesCount,
+                            "myStatus": checkUserStatus.toString()
+                        }
+                    })
+            }
+
+
             })
 
     //delete comment by id
@@ -86,7 +110,7 @@ commentsRouter
 
                 if (checkUserOwnComment) {
 
-                    const isDeleted = await commentsService.deleteComment(req.params.id)
+                    await commentsService.deleteComment(req.params.id)
 
                     return res.sendStatus(204)
 
@@ -118,7 +142,8 @@ commentsRouter
             const updateLikeStatus = await commentsService.createLikeStatus(userInfo, findCommentById, likeStatus)
 
             if (!updateLikeStatus) {
-                return res.sendStatus(400)}
+                return res.sendStatus(400)
+            }
 
             return res.sendStatus(204)
 

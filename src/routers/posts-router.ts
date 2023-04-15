@@ -113,6 +113,7 @@ postsRouter
             if (!post) { return res.sendStatus(404) }
 
             const newComment = await commentsService.createComment(post.id, req.body.content, userInfo!)
+
             res.status(201).send(newComment)
 
         })

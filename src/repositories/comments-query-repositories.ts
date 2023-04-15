@@ -31,27 +31,29 @@ export const commentsQueryRepositories = {
 
     async findCommentById(id: string): Promise<CommentDBType | null> {
 
-        const foundComment: CommentDBType | null = await commentsCollection.findOne({id: id}, {projection: {_id: 0, postId: 0}})
+        const foundComment: CommentDBType | null = await commentsCollection.findOne({id: id})
+
+        if (!foundComment) {return null}
+
         return foundComment
+
     },
 
-    async checkUserLike (id: string): Promise< LikeStatusType> {
+    async checkUserLike (commentId: string, userId: string): Promise<LikeStatusType> {
 
-        const checkUserLikeInComment = await commentsCollection.findOne(
-            { "likesInfo.usersPutLikes.userId": id})
-
+        const checkUserLikeInComment = await commentsCollection.findOne({ id: commentId, "likesInfo.usersPutLikes.userId": userId})
 
         if (checkUserLikeInComment) {
             return "Like"
         }
 
-        const checkUserDislikeInComment = await commentsCollection.findOne(
-                { "dislikesInfo.usersPutDislikes.userId": id})
+        const checkUserDislikeInComment = await commentsCollection.findOne({ id: commentId, "dislikesInfo.usersPutDislikes.userId": userId})
 
         if (checkUserDislikeInComment) {
             return "Dislike"
         }
 
         return "None"
+
     }
 }
