@@ -1,7 +1,7 @@
 import {authBearerFindUser, authBearerMiddleware} from "../middlewares/authToken";
 import {Request, Response, Router} from "express";
 import {commentsService} from "../domain/comments-service";
-import {contentCommentValidation} from "../middlewares/comments-validation";
+import {contentCommentValidation, likeStatusValidation} from "../middlewares/comments-validation";
 import {inputValidationMiddleware} from "../middlewares/input-validation-middleware";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
 
@@ -40,10 +40,7 @@ commentsRouter
 
     //return comment by id
     .get("/:id",
-        //checkRefreshToken,
         authBearerFindUser,
-        //authBearerMiddleware,
-
         async (req: Request, res: Response) => {
 
             const userInfo = req.user
@@ -126,7 +123,9 @@ commentsRouter
 
 //Make like/unlike/dislike/undislike operation
     .put('/:commentId/like-status',
+        likeStatusValidation,
         authBearerMiddleware,
+        inputValidationMiddleware,
         async (req: Request, res: Response) => {
 
             const userInfo = req.user // id юзера, который залогинен и хочет лайкнуть
