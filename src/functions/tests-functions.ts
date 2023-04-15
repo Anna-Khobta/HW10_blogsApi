@@ -2,13 +2,25 @@ import express from "express";
 import request from "supertest";
 import {
     basicAuth,
+    blogDescription,
+    blogName,
     blogNameDescriptionUrl,
+    blogUrl,
     commentContent,
     loginOrEmailPassw,
-    secondCommentContent
+    myEmail,
+    myLogin,
+    myLoginOrEmail,
+    myPassword,
+    newPassword,
+    postContent,
+    postShortDescription,
+    postTitle,
+    secondCommentContent, secondEmail,
+    secondLogin
 } from "./tests-objects";
 import {app} from "../settings";
-import {LikeStatusType} from "../repositories/db/types";
+import {LikeStatusesEnum} from "../repositories/db/types";
 
 
 
@@ -141,7 +153,7 @@ export const getUsersWithPagination = async (sortBy:string|null, sortDirection: 
 
 export async function deleteAllCreateUser (login:string, password: string, email: string, basicAuth: string) {
 
-    const deleteAll = await request(app)
+    await request(app)
         .delete('/testing/all-data')
         .expect(204)
 
@@ -181,7 +193,7 @@ export const authLogin = (loginOrEmail:string, password: string) => {
 export const authMe = (userAccessToken:string) => {
     return request(app)
         .get("/auth/me")
-        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .auth(userAccessToken, {type: 'bearer'})
 }
 
 
@@ -268,7 +280,7 @@ export const createComment = async (postId: string, userAccessToken: string) => 
 
     return request(app)
         .post('/posts/' + postId + '/comments')
-        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .auth(userAccessToken, {type: 'bearer'})
         .send({
             "content": commentContent
         })
@@ -285,9 +297,18 @@ export const getNewCommentWithLike = async (commentId: string, userAccessToken: 
 
     return request(app)
         .get('/comments/' + commentId)
-        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .auth(userAccessToken, {type: 'bearer'})
 
 }
+
+export const getNewCommentWithAuthCookies = async (commentId: string, cookies: string) => {
+
+    return request(app)
+        .get('/comments/' + commentId)
+        .set('Cookie', cookies)
+
+}
+
 
 
 export const getCommentsWithPagination =
@@ -305,17 +326,17 @@ export const updateComment = async (commentId: string, userAccessToken: string) 
 
     return request(app)
         .put('/comments/' + commentId)
-        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .auth(userAccessToken, {type: 'bearer'})
         .send({
             "content": secondCommentContent
         })
 }
 
-export const updateCommentLikeStatus = async (commentId: string, userAccessToken: string, likeStatus: LikeStatusType) => {
+export const updateCommentLikeStatus = async (commentId: string, userAccessToken: string, likeStatus: LikeStatusesEnum) => {
 
     return request(app)
         .put('/comments/' + commentId + '/like-status')
-        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .auth(userAccessToken, {type: 'bearer'})
         .send({
             "likeStatus": likeStatus
         })
@@ -325,7 +346,7 @@ export const deleteComment = async (commentId: string, userAccessToken: string) 
 
     return request(app)
         .delete('/comments/' + commentId)
-        .set('Authorization', "Bearer" + " " + userAccessToken)
+        .auth(userAccessToken, {type: 'bearer'})
 }
 
 
@@ -377,5 +398,59 @@ export const waitSomeSeconds = async (seconds: number) => {
 
 export const clearAllDb = async () => {
     await request(app).delete('/testing/all-data')
+}
+
+
+type testCreateAll = {
+    createdUserAccessToken:string,
+    newCommentId:string,
+    newCommentContent:string,
+    newCommentUserId:string,
+    newCommentUserLogin:string,
+    newCommentCreatedAt :string
+}
+
+
+export const createBlogPostUserLoginComment = async (): Promise<testCreateAll> => {
+    await clearAllDb()
+
+    const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+    expect(createNewBlog.status).toBe(201)
+
+    const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+    expect(createNewPost.status).toBe(201)
+
+    const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+    expect(createNewUser.status).toBe(201)
+
+    const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+    expect(loginMyUser.status).toBe(200)
+
+    const createdUserAccessToken = loginMyUser.body.accessToken
+
+    const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+    expect(createNewComment.status).toBe(201)
+
+    const newCommentId = createNewComment.body.id
+    const newCommentContent =  createNewComment.body.content
+    const newCommentUserId = createNewComment.body.commentatorInfo.userId
+    const newCommentUserLogin = createNewComment.body.commentatorInfo.userLogin
+    const newCommentCreatedAt = createNewComment.body.createdAt
+
+    return {createdUserAccessToken, newCommentId, newCommentContent, newCommentUserId,newCommentUserLogin, newCommentCreatedAt }
+}
+
+
+export const createUser2 = async (): Promise<testCreateAll> => {
+
+    const createNewUser = await createUser(secondLogin, newPassword, secondEmail, basicAuth)
+    expect(createNewUser.status).toBe(201)
+
+    const loginMyUser = await authLogin(secondLogin, newPassword)
+    expect(loginMyUser.status).toBe(200)
+
+    const createdUser2AccessToken = loginMyUser.body.accessToken
+
+    return createdUser2AccessToken
 }
 

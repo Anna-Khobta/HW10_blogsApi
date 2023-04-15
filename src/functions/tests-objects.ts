@@ -30,6 +30,14 @@ export const newPassword = "newPassword"
 export const myEmail = "nakanai.x@gmail.com"
 export const secondEmail = 'ana14i88@gmail.com'
 
+export const thirdLogin = "nakanai3"
+export const thirdPassword = "nakanai3"
+export const thirdEmail = 'khobta.av@gmail.com'
+export const thirdLoginOrEmail = "nakanai3"
+
+
+
+
 export const myLoginOrEmail = "nakanai"
 export const secondLoginOrEmail = "nakanai1"
 
@@ -38,6 +46,9 @@ export const secondCommentContent = "Updated some content"
 
 export const likeStatusisLike = "Like"
 export const likeStatusisDisLike = "Dislike"
+export const likeStatusisNone = "None"
+
+
 
 
 export const fourBrowsers = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',

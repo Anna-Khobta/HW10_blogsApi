@@ -1,21 +1,23 @@
 import {app} from "../src/settings";
 import request from "supertest"
-import {BlogType} from "../src/repositories/db/types";
+import {BlogType, LikeStatusesEnum} from "../src/repositories/db/types";
 import {
     authLogin,
     authMe,
     clearAllDb,
-    createBlog,
+    createBlog, createBlogPostUserLoginComment,
     createComment,
     createPost,
     createSeveralItems,
-    createUser,
+    createUser, createUser2,
     deleteComment,
     getBlogById,
     getBlogsWithPagination,
     getCommentById,
-    getCommentsWithPagination, getNewCommentWithLike,
-    updateComment, updateCommentLikeStatus
+    getCommentsWithPagination,
+    getNewCommentWithLike,
+    updateComment,
+    updateCommentLikeStatus
 } from "../src/functions/tests-functions";
 import {client} from "../src/repositories/db/db";
 import {
@@ -26,23 +28,28 @@ import {
     blogSecondName,
     blogSecondUrl,
     blogUrl,
-    commentContent, likeStatusisDisLike,
-    likeStatusisLike,
+    commentContent,
     myEmail,
     myLogin,
     myLoginOrEmail,
-    myPassword, newPassword,
+    myPassword,
+    newPassword,
     postContent,
     postNewContent,
     postNewShortDescription,
     postNewTitle,
     postShortDescription,
-    postTitle, secondEmail,
-    secondLogin, secondLoginOrEmail
+    postTitle,
+    secondEmail,
+    secondLogin,
+    secondLoginOrEmail,
+    thirdEmail,
+    thirdLogin,
+    thirdLoginOrEmail,
+    thirdPassword
 } from "../src/functions/tests-objects";
 import {MongoClient} from "mongodb";
 import mongoose from "mongoose";
-
 
 
 describe('/Comments', () => {
@@ -166,8 +173,6 @@ describe('/Comments', () => {
         const createdUserAccessToken = loginMyUser.body.accessToken
         expect(createdUserAccessToken).not.toBeUndefined()
 
-        console.log(createdUserAccessToken)
-
         const getInfoAboutMe = await authMe(createdUserAccessToken)
         expect(getInfoAboutMe.status).toBe(200)
 
@@ -249,7 +254,6 @@ describe('/Comments', () => {
         })
 
     it('return comments for special post with pagination', async () => {
-
 
         await clearAllDb()
 
@@ -356,7 +360,7 @@ describe('/Comments, Likes', () => {
             }
         )
 
-        const updateNewComment = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, likeStatusisLike)
+        const updateNewComment = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, LikeStatusesEnum.Like)
         expect(updateNewComment.status).toBe(204)
 
         const getNewComment = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
@@ -373,7 +377,7 @@ describe('/Comments, Likes', () => {
             likesInfo: {
                 "likesCount": 1,
                 "dislikesCount": 0,
-                "myStatus": likeStatusisLike
+                "myStatus": LikeStatusesEnum.Like
             }
         }
 
@@ -393,7 +397,7 @@ describe('/Comments, Likes', () => {
 
         const createdUserAccessToken2 = loginMyUser2.body.accessToken
 
-        const updateNewComment2 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken2, likeStatusisDisLike)
+        const updateNewComment2 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken2, LikeStatusesEnum.Dislike)
         expect(updateNewComment2.status).toBe(204)
 
         const getNewComment2 = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken2)
@@ -410,7 +414,7 @@ describe('/Comments, Likes', () => {
             likesInfo: {
                 "likesCount": 1,
                 "dislikesCount": 1,
-                "myStatus": likeStatusisDisLike
+                "myStatus": LikeStatusesEnum.Dislike
             }
         }
 
@@ -418,7 +422,397 @@ describe('/Comments, Likes', () => {
     })
 
 
+    it('GET => /comments/:id; with auth', async () => {
+
+        await clearAllDb()
+
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
+
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
+
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
+
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
+
+        const createdUserAccessToken = loginMyUser.body.accessToken
+
+        const myCookies = loginMyUser.headers['set-cookie'][0]
+
+        expect(loginMyUser.body).toMatchObject({
+            "accessToken": expect.any(String)
+        });
+
+        expect(myCookies).toBeDefined()
+
+
+        const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+        expect(createNewComment.status).toBe(201)
+
+        expect(createNewComment.body).toMatchObject(
+            {
+                id: createNewComment.body.id,
+                content: createNewComment.body.content,
+                commentatorInfo: {
+                    userId: createNewUser.body.id,
+                    userLogin: createNewUser.body.login
+                },
+                createdAt: createNewComment.body.createdAt,
+                likesInfo: {
+                    "likesCount": 0,
+                    "dislikesCount": 0,
+                    "myStatus": "None"
+                }
+            }
+        )
+
+        const updateNewComment = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(updateNewComment.status).toBe(204)
+
+
+        const getNewComment1 = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
+        expect(getNewComment1.status).toBe(200)
+
+        expect(getNewComment1.body.likesInfo.likesCount).toBe(1)
+        expect(getNewComment1.body.likesInfo.myStatus).toBe("Like")
+
+
+        /*      const getNewComment = await getNewCommentWithAuthCookies(createNewComment.body.id, myCookies)
+              expect(getNewComment.status).toBe(200)
+
+              expect(getNewComment.body.likesInfo.likesCount).toBe(1)
+              expect(getNewComment.body.likesInfo.myStatus).toBe("Like")*/
+
+    })
+
+
+    it('Create Comment, dislike the comment by user 1, user 2; ' +
+        'like the comment by user 3; get the comment after each like by user 1', async () => {
+
+        await clearAllDb()
+
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
+
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
+
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
+
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
+
+        const createdUserAccessToken = loginMyUser.body.accessToken
+
+        const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+        expect(createNewComment.status).toBe(201)
+
+        const dislikeNewComment1 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, LikeStatusesEnum.Dislike)
+        expect(dislikeNewComment1.status).toBe(204)
+
+        const getNewComment = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
+        expect(getNewComment.status).toBe(200)
+
+        /*const expCom = {...getNewComment.body,  likesInfo: {
+                "likesCount": 0,
+                "dislikesCount": 1,
+                "myStatus": LikeStatusesEnum.Dislike
+            }} // спрэд */
+
+        const expectedComment = {
+            id: createNewComment.body.id,
+            content: createNewComment.body.content,
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login
+            },
+            createdAt: createNewComment.body.createdAt,
+            likesInfo: {
+                "likesCount": 0,
+                "dislikesCount": 1,
+                "myStatus": LikeStatusesEnum.Dislike
+            }
+        }
+        expect(getNewComment.body).toStrictEqual(expectedComment)
+
+        const createNewUser2 = await createUser(secondLogin, newPassword, secondEmail, basicAuth)
+        expect(createNewUser2.status).toBe(201)
+
+        const loginMyUser2 = await authLogin(secondLoginOrEmail, newPassword)
+        expect(loginMyUser2.status).toBe(200)
+
+        const createdUserAccessToken2 = loginMyUser2.body.accessToken
+
+        const updateNewComment2 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken2, LikeStatusesEnum.Dislike)
+        expect(updateNewComment2.status).toBe(204)
+
+
+        const getNewComment2By1User = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
+        expect(getNewComment2By1User.status).toBe(200)
+
+        const expectedComment2 = {
+            id: createNewComment.body.id,
+            content: createNewComment.body.content,
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login
+            },
+            createdAt: createNewComment.body.createdAt,
+            likesInfo: {
+                "likesCount": 0,
+                "dislikesCount": 2,
+                "myStatus": LikeStatusesEnum.Dislike
+            }
+        }
+        expect(getNewComment2By1User.body).toStrictEqual(expectedComment2)
+
+
+        const createNewUser3 = await createUser(thirdLogin, thirdPassword, thirdEmail, basicAuth)
+        expect(createNewUser3.status).toBe(201)
+
+        const loginMyUser3 = await authLogin(thirdLoginOrEmail, thirdPassword)
+        expect(loginMyUser3.status).toBe(200)
+
+        const createdUserAccessToken3 = loginMyUser3.body.accessToken
+
+        const updateNewComment3 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken3, LikeStatusesEnum.Like)
+        expect(updateNewComment3.status).toBe(204)
+
+
+        const getNewComment3By1User = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
+        expect(getNewComment3By1User.status).toBe(200)
+
+        const expectedComment3 = {
+            id: createNewComment.body.id,
+            content: createNewComment.body.content,
+            commentatorInfo: {
+                userId: createNewUser.body.id,
+                userLogin: createNewUser.body.login
+            },
+            createdAt: createNewComment.body.createdAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 2,
+                "myStatus": LikeStatusesEnum.Dislike
+            }
+        }
+
+
+        const likeByFirstUser = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likeByFirstUser.status).toBe(204)
+
+
+        const get = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
+        expect(get.status).toBe(200)
+        expect(get.body.likesInfo).toStrictEqual({
+            "likesCount": 2,
+            "dislikesCount": 1,
+            "myStatus": LikeStatusesEnum.Like
+        })
+
+
+    })
+
+    it(':Like the comment twice by user 1; ' +
+        'get the comment after each like by user 1', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likeNewComment.status).toBe(204)
+
+        const getNewCommentStatus = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
+        expect(getNewCommentStatus.status).toBe(200)
+
+        const expectedComment = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 0,
+                "myStatus": LikeStatusesEnum.Like
+            }
+        }
+        expect(getNewCommentStatus.body).toMatchObject(expectedComment)
+
+        const likeNewComment2 = await updateCommentLikeStatus(createAll.newCommentId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likeNewComment2.status).toBe(204)
+
+        const getNewCommentStatus2 = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
+        expect(getNewCommentStatus2.status).toBe(200)
+
+        expect(getNewCommentStatus2.body).toMatchObject(expectedComment)
+
+    })
+
+
+    it('like the comment by user 1; dislike the comment by user 1;' +
+        ' set none status by user 1; get the comment after each like by user 1', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likeNewComment.status).toBe(204)
+
+        const getNewCommentStatus = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
+        expect(getNewCommentStatus.status).toBe(200)
+
+        const expectedComment = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 0,
+                "myStatus": LikeStatusesEnum.Like
+            }
+        }
+        expect(getNewCommentStatus.body).toMatchObject(expectedComment)
+
+        const likeNewComment2 = await updateCommentLikeStatus(createAll.newCommentId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Dislike)
+        expect(likeNewComment2.status).toBe(204)
+
+        const getNewCommentStatus2 = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
+        expect(getNewCommentStatus2.status).toBe(200)
+
+        const expectedComment2 = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 0,
+                "dislikesCount": 1,
+                "myStatus": LikeStatusesEnum.Dislike
+            }
+        }
+        expect(getNewCommentStatus2.body).toMatchObject(expectedComment2)
+
+        const likeNewComment3 = await updateCommentLikeStatus(createAll.newCommentId, createAll.createdUserAccessToken, LikeStatusesEnum.None)
+        expect(likeNewComment3.status).toBe(204)
+
+        const getNewCommentStatus3 = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
+        expect(getNewCommentStatus3.status).toBe(200)
+
+        const expectedComment3 = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 0,
+                "dislikesCount": 0,
+                "myStatus": LikeStatusesEnum.None
+            }
+        }
+        expect(getNewCommentStatus3.body).toMatchObject(expectedComment3)
+    })
+
+
+    it(' like the comment by user 1 then get by user 2; ' +
+        'dislike the comment by user 2 then get by the user 1', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likeNewComment.status).toBe(204)
+
+        const createdUser2 = await createUser2()
+
+        const getNewCommentStatusBy2 = await getNewCommentWithLike(createAll.newCommentId, createdUser2.createdUserAccessToken)
+        expect(getNewCommentStatusBy2.status).toBe(200)
+
+        const expectedCommentBy2 = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 0,
+                "myStatus": LikeStatusesEnum.None
+            }
+        }
+        expect(getNewCommentStatusBy2.body).toMatchObject(expectedCommentBy2)
+
+    })
+
 })
 
-
+// describe.skip('/Comments, Likes2', () => {
+//
+//     jest.setTimeout(3 * 60 * 1000)
+//
+//     beforeAll(async () => {
+//         const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
+//         const client = new MongoClient(mongoUri!)
+//         await client.connect()
+//         await mongoose.connect(mongoUri!);
+//         console.log(" ✅ Connected successfully to mongo db and mongoose");
+//
+//     })
+//
+//     afterAll(async () => {
+//         await client.close();
+//         await mongoose.disconnect();
+//         console.log(" ✅ Closed mongo db and mongoose")
+//     })
+//
+//     it('like the comment by user 1 then get by user 2; ' +
+//         'dislike the comment by user 2 then get by the user 1', async () => {
+//
+//         const createAll = await createBlogPostUserLoginComment()
+//
+//         const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
+//             createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+//         expect(likeNewComment.status).toBe(204)
+//
+//         const getNewCommentStatus = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
+//         expect(getNewCommentStatus.status).toBe(200)
+//
+//         const expectedComment = {
+//             id: createAll.newCommentId,
+//             content: createAll.newCommentContent,
+//             commentatorInfo: {
+//                 userId: createAll.newCommentUserId,
+//                 userLogin: createAll.newCommentUserLogin,
+//             },
+//             createdAt: createAll.newCommentCreatedAt,
+//             likesInfo: {
+//                 "likesCount": 1,
+//                 "dislikesCount": 0,
+//                 "myStatus": LikeStatusesEnum.Like
+//             }
+//         }
+//         expect(getNewCommentStatus.body).toMatchObject(expectedComment)
+//
+//     })
+// })
 
