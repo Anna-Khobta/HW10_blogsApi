@@ -39,3 +39,33 @@ passwordRecovery: {
     }
 })
 
+/*
+
+export const commentSchema = new mongoose.Schema<CommentDBType>({
+    id: String,
+    postId: String,
+    content: String,
+    createdAt: String,
+    commentatorInfo: {
+        userId: String,
+        userLogin: String
+    },
+    usersEngagement: [{userId: String, createdAt: String, userStatus: LikeStatusesEnum}]
+
+});
+
+
+
+type CommentDBType = {
+    id: string,
+    postId: string
+    content: string,
+    createdAt: string,
+    commentatorInfo: {
+        userId: string,
+        userLogin: string
+    },
+    usersEngagement: [{userId: String, createdAt: String, userStatus: LikeStatusesEnum }]
+
+}
+*/
