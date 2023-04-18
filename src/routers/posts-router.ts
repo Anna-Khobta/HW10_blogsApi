@@ -8,7 +8,7 @@ import {titleValidation, shortDescriptionValidation, contentValidation, idValida
 import {postsService} from "../domain/posts-service";
 import {getPagination} from "../functions/pagination";
 import {postsQueryRepositories} from "../repositories/posts-query-repositories";
-import {authBearerMiddleware} from "../middlewares/authToken";
+import {authBearerFindUser, authBearerMiddleware} from "../middlewares/authToken";
 import {contentCommentValidation} from "../middlewares/comments-validation";
 import {commentsService} from "../domain/comments-service";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
@@ -118,8 +118,12 @@ postsRouter
 
         })
 
+    // return comments for special post
     .get('/:postId/comments',
-    async (req: Request, res: Response ) => {
+        authBearerFindUser,
+        async (req: Request, res: Response) => {
+
+            const userInfo = req.user
 
         const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
 
@@ -128,8 +132,29 @@ postsRouter
         if (!post) { return res.sendStatus(404) }
 
         const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
+
         res.status(200).send(foundComments)
 
     })
 
+/*
+
+вот так работало
+    .get('/:postId/comments',
+        authBearerFindUser,
+        async (req: Request, res: Response) => {
+
+            const userInfo = req.user
+
+            const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
+
+            let post = await postsQueryRepositories.findPostById(req.params.postId)
+
+            if (!post) { return res.sendStatus(404) }
+
+            const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
+
+            res.status(200).send(foundComments)
+
+        })*/
 

@@ -292,6 +292,14 @@ export const getCommentById = async (commentId: string) => {
 
 }
 
+export const getAllCommentsOfPost = async (postId: string, userAccessToken: string) => {
+    return request(app)
+        .get('/posts/' + postId + '/comments/')
+        .auth(userAccessToken, {type: 'bearer'})
+
+}
+
+
 
 export const getNewCommentWithLike = async (commentId: string, userAccessToken: string) => {
 
@@ -407,7 +415,8 @@ type testCreateAll = {
     newCommentContent:string,
     newCommentUserId:string,
     newCommentUserLogin:string,
-    newCommentCreatedAt :string
+    newCommentCreatedAt :string,
+    newPostId:string
 }
 
 
@@ -437,7 +446,9 @@ export const createBlogPostUserLoginComment = async (): Promise<testCreateAll> =
     const newCommentUserLogin = createNewComment.body.commentatorInfo.userLogin
     const newCommentCreatedAt = createNewComment.body.createdAt
 
-    return {createdUserAccessToken, newCommentId, newCommentContent, newCommentUserId,newCommentUserLogin, newCommentCreatedAt }
+    const newPostId = createNewPost.body.id
+
+    return {createdUserAccessToken, newCommentId, newCommentContent, newCommentUserId,newCommentUserLogin, newCommentCreatedAt, newPostId }
 }
 
 

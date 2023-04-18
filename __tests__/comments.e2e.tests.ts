@@ -10,7 +10,7 @@ import {
     createPost,
     createSeveralItems,
     createUser, createUser2,
-    deleteComment,
+    deleteComment, getAllCommentsOfPost,
     getBlogById,
     getBlogsWithPagination,
     getCommentById,
@@ -761,6 +761,12 @@ describe('/Comments, Likes', () => {
             }
         }
         expect(getNewCommentStatusBy2.body).toMatchObject(expectedCommentBy2)
+
+    const getAllComments = await getAllCommentsOfPost(createAll.newPostId, createAll.createdUserAccessToken)
+        expect(getAllComments.status).toBe(200)
+
+
+
 
     })
 

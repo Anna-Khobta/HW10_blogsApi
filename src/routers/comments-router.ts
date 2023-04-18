@@ -133,7 +133,6 @@ commentsRouter
 
             const findCommentById = await commentsQueryRepositories.findCommentById(req.params.commentId)
 
-
             if (!findCommentById) {
                 return res.sendStatus(404)
             }

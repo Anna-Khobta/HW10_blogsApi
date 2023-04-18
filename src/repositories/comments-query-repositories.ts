@@ -4,13 +4,13 @@ import {CommentDBType, LikeStatusType} from "./db/types";
 
 
 export const commentsQueryRepositories = {
+
     async findCommentsForPost (postId: string, page: number, limit:number,
                                sortDirection: SortDirection,
                                sortBy: string, skip: number) {
+
         const filter = {postId}
-        const findComments = await commentsCollection.find(
-            filter,
-            {projection: {_id: 0, postId: 0}})
+        const findComments = await commentsCollection.find({postId: postId})
             .sort({ [sortBy]: sortDirection })
             .skip(skip)
             .limit(limit)
@@ -19,6 +19,32 @@ export const commentsQueryRepositories = {
         const total = await commentsCollection.countDocuments(filter)
         const pagesCount = Math.ceil(total/limit)
 
+/*        const items = findUsers.map(user => ({
+            id: user.id,
+            login: user.accountData.login,
+            email: user.accountData.email,
+            createdAt: user.accountData.createdAt
+        }));*/
+
+      /*  const items: CommentViewType[] = findComments.map(async (comment) => {
+            const myStatus = await commentsQueryRepositories.checkUserLike(comment.id, userId);
+
+            return {
+                id: comment.id,
+                content: comment.content,
+                commentatorInfo: {
+                    userId: comment.commentatorInfo.userId,
+                    userLogin: comment.commentatorInfo.userLogin
+                },
+                createdAt: comment.createdAt,
+                likesInfo: {
+                    likesCount: comment.likesInfo.likesCount,
+                    dislikesCount: comment.dislikesInfo.dislikesCount,
+                    myStatus: myStatus
+                }
+            };
+        });*/
+
         return {
             pagesCount: pagesCount,
             page: page,
@@ -26,7 +52,6 @@ export const commentsQueryRepositories = {
             totalCount: total,
             items: findComments
         }
-
     },
 
     async findCommentById(id: string): Promise<CommentDBType | null> {

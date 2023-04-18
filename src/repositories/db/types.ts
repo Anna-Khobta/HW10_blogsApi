@@ -74,6 +74,7 @@ export type CommentDBType = {
         dislikesCount: number | 0
         usersPutDislikes: UserLikeInfo[],
     }
+
 }
 
 
@@ -82,6 +83,11 @@ export type UserLikeInfo = {
     createdAt: string
 }
 
+export enum LikeStatusesEnum  {
+    Like = "Like",
+    Dislike = "Dislike",
+    None = "None"
+}
 
 export type LikeStatusType = "Like" | "Dislike" | "None"
 
