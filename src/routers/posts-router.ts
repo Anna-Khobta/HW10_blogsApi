@@ -131,9 +131,11 @@ postsRouter
 
         if (!post) { return res.sendStatus(404) }
 
-        const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
+        if (!userInfo) {
+            const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
+            res.status(200).send(foundComments)
 
-        res.status(200).send(foundComments)
+        }
 
     })
 

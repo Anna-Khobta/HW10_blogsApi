@@ -13,41 +13,17 @@ export const commentsQueryRepositories = {
 
         const findComments = await CommentsModelClass.find(
             {postId: postId},
-            {_id: 0, __v: 0})
+            {__v: 0})
             .skip(skip)
             .limit(limit)
             .sort({sortBy: sortDirection})
             .lean()
 
+        console.log(findComments)
 
         const total = await CommentsModelClass.countDocuments(filter)
         const pagesCount = Math.ceil(total/limit)
 
-/*        const items = findUsers.map(user => ({
-            id: user.id,
-            login: user.accountData.login,
-            email: user.accountData.email,
-            createdAt: user.accountData.createdAt
-        }));*/
-
-      /*  const items: CommentViewType[] = findComments.map(async (comment) => {
-            const myStatus = await commentsQueryRepositories.checkUserLike(comment.id, userId);
-
-            return {
-                id: comment.id,
-                content: comment.content,
-                commentatorInfo: {
-                    userId: comment.commentatorInfo.userId,
-                    userLogin: comment.commentatorInfo.userLogin
-                },
-                createdAt: comment.createdAt,
-                likesInfo: {
-                    likesCount: comment.likesInfo.likesCount,
-                    dislikesCount: comment.dislikesInfo.dislikesCount,
-                    myStatus: myStatus
-                }
-            };
-        });*/
 
         return {
             pagesCount: pagesCount,
