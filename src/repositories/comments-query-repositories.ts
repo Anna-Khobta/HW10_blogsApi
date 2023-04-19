@@ -57,16 +57,18 @@ export const commentsQueryRepositories = {
 
         const filter = {postId}
 
+        console.log(sortDirection, 'pagination')
+
         const findComments = await CommentsModelClass.find(
             {postId: postId},
             {__v: 0})
+            .sort({[sortBy]: sortDirection})
             .skip(skip)
             .limit(limit)
-            .sort({sortBy: sortDirection})
             .lean()
 
-
-        const mappedComments = findComments.map(comment => {
+        const mappedComments = findComments.map((comment) => {
+            const myStatus = comment.usersEngagement.find(el => el.userId === userId)
             return {
                 id: comment._id.toString(),
                 content: comment.content,
@@ -78,7 +80,7 @@ export const commentsQueryRepositories = {
                 likesInfo: {
                     likesCount: comment.likesCount,
                     dislikesCount: comment.dislikesCount,
-                    myStatus: "None" // Set the default value for myStatus
+                    myStatus: myStatus?.userStatus || 'None'
                 }
             }
         })

@@ -107,11 +107,9 @@ commentsRouter
             const userInfo = req.user // id юзера, который залогинен и хочет лайкнуть
             const likeStatus = req.body.likeStatus
 
-            console.log(req.params.commentId)
 
             const findCommentById = await commentsQueryRepositories.findCommentById(req.params.commentId)
 
-            console.log(findCommentById)
 
             if (!findCommentById) {
                 return res.sendStatus(404)

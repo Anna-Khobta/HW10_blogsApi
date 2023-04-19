@@ -594,22 +594,6 @@ describe('/Comments, Likes', () => {
         const getNewComment3By1User = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
         expect(getNewComment3By1User.status).toBe(200)
 
-        const expectedComment3 = {
-            id: createNewComment.body.id,
-            content: createNewComment.body.content,
-            commentatorInfo: {
-                userId: createNewUser.body.id,
-                userLogin: createNewUser.body.login
-            },
-            createdAt: createNewComment.body.createdAt,
-            likesInfo: {
-                "likesCount": 1,
-                "dislikesCount": 2,
-                "myStatus": LikeStatusesEnum.Dislike
-            }
-        }
-
-
         const likeByFirstUser = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken, LikeStatusesEnum.Like)
         expect(likeByFirstUser.status).toBe(204)
 
@@ -799,12 +783,20 @@ describe('/Comments, Likes', () => {
         const create6Comments = await createSeveralItems(6, url, body, auth)
         expect(create6Comments.length).toBe(6)
 
+        console.log(create6Comments[1])
+
         const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
             createAll.createdUserAccessToken, LikeStatusesEnum.Like)
 
+        /*const getAllCommentsForSpecialPost = await getCommentsWithPaginationWithAuth("sortBy=createdAt",
+            null, "pageNumber=2", "pageSize=3", createAll.newPostId, createAll.createdUserAccessToken)
+        expect(getAllCommentsForSpecialPost.status).toBe(200)*/
+
         const getAllCommentsForSpecialPost = await getCommentsWithPaginationWithAuth("sortBy=createdAt",
-            "sortDirection=asc", "pageNumber=2", "pageSize=3", createAll.newPostId, createAll.createdUserAccessToken)
+            null, null, null, createAll.newPostId, createAll.createdUserAccessToken)
         expect(getAllCommentsForSpecialPost.status).toBe(200)
+
+        console.log(getAllCommentsForSpecialPost.body)
 
         const expectedComment = {
             id: createAll.newCommentId,
@@ -822,6 +814,10 @@ describe('/Comments, Likes', () => {
         }
         expect(getAllCommentsForSpecialPost.body.items[0]).toStrictEqual(expectedComment)
 
+        expect(getAllCommentsForSpecialPost.body.items[1]).toStrictEqual(create6Comments[0])
+
+        console.log(getAllCommentsForSpecialPost.body)
+
     })
 
     it('get 6 comments for post', async () => {
@@ -838,7 +834,7 @@ describe('/Comments, Likes', () => {
 
 
         const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
-            "sortDirection=asc", "pageNumber=2", "pageSize=3", createAll.newPostId)
+            "sortDirection=desc", "pageNumber=2", "pageSize=3", createAll.newPostId)
         expect(getAllCommentsForSpecialPost.status).toBe(200)
 
         //console.log(getAllCommentsForSpecialPost.body)

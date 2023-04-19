@@ -1,5 +1,5 @@
 import {MongoClient} from "mongodb";
-import {ipDbType, TokenDBType} from "./types";
+import {CommentDBType, ipDbType, TokenDBType} from "./types";
 
 import mongoose from 'mongoose'
 import {blogSchema, commentSchema, postSchema, userSchema} from "./schemas";
@@ -18,7 +18,34 @@ export const PostModelClass = mongoose.model('Posts', postSchema )
 
 export const UserModelClass = mongoose.model('Users', userSchema )
 
-export const CommentsModelClass = mongoose.model('Comments', commentSchema)
+
+/*
+
+interface CommentModelInterface extends Document {
+    postId: string;
+    content: string;
+    createdAt: string;
+    commentatorInfo: {
+        userId: string;
+        userLogin: string;
+    };
+    likesCount: number;
+    dislikesCount: number;
+    usersEngagement: {
+        userId: string;
+        createdAt: string;
+        userStatus: LikeStatusesEnum;
+    }[];
+
+}
+
+
+// add the static method to the schema
+*/
+
+
+export const CommentsModelClass = mongoose.model<CommentDBType>('Comment', commentSchema);
+
 
 
 

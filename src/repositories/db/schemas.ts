@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import {CommentDBType, LikeStatusesEnum, PostDbType, UserDbType} from "./types";
+import mongoose, {Schema} from "mongoose";
+import {LikeStatusesEnum, PostDbType, UserDbType} from "./types";
 
 export const blogSchema = new mongoose.Schema({
     id: String,
@@ -39,7 +39,7 @@ passwordRecovery: {
     }
 })
 
-export const commentSchema = new mongoose.Schema<CommentDBType>({
+export const commentSchema = new Schema ({
     //id: String,
     postId: String,
     content: String,
@@ -58,6 +58,20 @@ export const commentSchema = new mongoose.Schema<CommentDBType>({
                 enum: Object.values(LikeStatusesEnum),
                 default: LikeStatusesEnum.None
             }}]
-});
 
+
+}
+);
+
+
+commentSchema.statics.getCommentUserStatus = async function(commentId: string, userId: string) {
+    const comment = await this.findById(commentId)
+    if (!comment) {
+        throw new Error('Comment not found')
+    }
+    const userStatus = comment.usersEngagement.find((userEngagement: { userId: string, createdAt:
+            string, userStatus: string }) => userEngagement.userId === userId);
+
+    return userStatus ? userStatus.userStatus : LikeStatusesEnum.None
+}
 

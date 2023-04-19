@@ -122,10 +122,14 @@ postsRouter
     .get('/:postId/comments',
         authBearerFindUser,
         async (req: Request, res: Response) => {
-
             const userInfo = req.user
 
+            console.log(userInfo, "uuuuuuu")
+
+            console.log(req.query.sortDirection, 'before ')
+
         const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
+            console.log(sortDirection, page, 'after func')
 
         let post = await postsQueryRepositories.findPostById(req.params.postId)
 
@@ -134,17 +138,15 @@ postsRouter
         if (!userInfo) {
             const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
             res.status(200).send(foundComments)
-        }
-            const foundCommentsWithUserId = await commentsQueryRepositories.findCommentsForPostWithUser(post.id, page, limit, sortDirection, sortBy, skip, userInfo!.id )
+        } else {
+            const foundCommentsWithUserId = await commentsQueryRepositories.findCommentsForPostWithUser(post.id, page, limit, sortDirection, sortBy, skip, userInfo.id )
             res.status(200).send(foundCommentsWithUserId)
-
-
-
-
+        }
     })
 
-/*
 
+
+/*
 вот так работало
     .get('/:postId/comments',
         authBearerFindUser,
