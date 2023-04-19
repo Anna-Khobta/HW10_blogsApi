@@ -1,8 +1,8 @@
 import {MongoClient} from "mongodb";
-import {CommentDBType, ipDbType, TokenDBType} from "./types";
+import {ipDbType, TokenDBType} from "./types";
 
 import mongoose from 'mongoose'
-import {blogSchema, postSchema, userSchema} from "./schemas";
+import {blogSchema, commentSchema, postSchema, userSchema} from "./schemas";
 
 export const mongoUri = process.env.MONGO_URL || "mongodb://127.0.0.1:27017"
 const dbName = "blogs-api"
@@ -16,13 +16,17 @@ export const BlogModelClass = mongoose.model('Blogs', blogSchema); //export cons
 // TODO сделать _id в id
 export const PostModelClass = mongoose.model('Posts', postSchema )
 
-
 export const UserModelClass = mongoose.model('Users', userSchema )
+
+export const CommentsModelClass = mongoose.model('Comments', commentSchema)
+
+
+
+//export const commentsCollection = db.collection<CommentDBType>("Comments")
 
 //export const usersCollection = db.collection<UserDbType>("Users");
 export const tokensCollection = db.collection<TokenDBType>("tokensCollection");
 export const ipCollection = db.collection<ipDbType>("ipCollection");
-export const commentsCollection = db.collection<CommentDBType>("Comments")
 
 export async function runDb () {
     try {

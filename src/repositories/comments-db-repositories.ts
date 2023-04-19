@@ -1,77 +1,104 @@
-import {commentsCollection} from "./db/db";
+import {CommentsModelClass} from "./db/db";
 
-import {CommentDBType, LikeStatusType, UserLikeInfo} from "./db/types";
+import {CommentDBType, LikeStatusesEnum, LikeStatusType, UserLikeInfo} from "./db/types";
+import {HydratedDocument} from "mongoose";
 
 
 export const commentsRepositories = {
 
-    async createComment(newComment: CommentDBType): Promise<CommentDBType> {
-        await commentsCollection.insertOne({...newComment})
-        return newComment
+    async saveComment(commentInstance: HydratedDocument<CommentDBType>): Promise<boolean> {
+        try {
+            await commentInstance.save()
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+
     },
+
+    /* async createComment(newComment: CommentDBType): Promise<CommentDBType> {
+         await CommentsModelClass.insertOne({...newComment})
+         return newComment
+     },*/
 
 
     async findCommentById(id: string): Promise<CommentDBType | null> {
-        let foundCommentById = await commentsCollection.findOne({id: id}, {projection: {_id: 0}})
+        let foundCommentById = await CommentsModelClass.findOne({_id: id})
+
         return foundCommentById || null
     },
 
-    async updateComment(id: string, content: string): Promise<boolean | undefined> {
+    async updateComment(id: string, content: string): Promise<string | null> {
 
-        const updatedComment = await commentsCollection.updateOne({id: id},
-            {$set: {content: content}})
+        const commentInstance = await CommentsModelClass.findOne({_id: id})
 
-        return updatedComment.matchedCount === 1
+        if (!commentInstance) {
+            return null
+        }
+
+        commentInstance.content = content;
+
+        try {
+            await commentInstance.save()
+            return commentInstance._id.toString()
+        } catch (error) {
+            console.log(error)
+            return null
+        }
     },
 
     async deleteComment(id: string): Promise<boolean> {
 
-        const result = await commentsCollection.deleteOne({id: id})
-        return result.deletedCount === 1
-        // если 1 сработало. если 0, то нет
+        const result = await CommentsModelClass.findOneAndDelete({_id: id})
+        return result !== null
     },
 
 
-    async deleteAllComments(): Promise<boolean> {
-        const result = await commentsCollection.deleteMany({})
-        return result.acknowledged
-        // если всё удалит, вернет true
+    async deleteAllComments(): Promise<number> {
+        const result = await CommentsModelClass.deleteMany({})
+        return result.deletedCount
     },
 
-    async updateLikesInComment(commentId: string, likes: number, dislikes: number): Promise<boolean> {
+    async updateLikesCountInComment(commentId: string, likes: number, dislikes: number): Promise<boolean> {
 
-        const updatedComment = await commentsCollection.updateOne({id: commentId},
-            {
-                $set: {
-                    "likesInfo.likesCount": likes,
-                    "dislikesInfo.dislikesCount": dislikes
-                }
-            })
+        const commentInstance = await CommentsModelClass.findOne({_id: commentId})
 
-        return updatedComment.matchedCount === 1
-    },
+        if (!commentInstance) { return false}
 
-    async createUserInfo(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusType): Promise<boolean> {
+        commentInstance.likesCount = likes;
+        commentInstance.dislikesCount = dislikes;
 
         try {
-            if (likeStatus === "Like") {
-                await commentsCollection.updateOne({id: commentId},
-                    {$push: {"likesInfo.usersPutLikes": userLikeInfo}})
+            await commentInstance.save()
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
+        }
 
-                /*const find = await commentsCollection.findOne({id: commentId})*/
+    },
 
-                return true
-            }
+    async addUserLikeInfoInDb(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
-            if (likeStatus === "Dislike") {
-                await commentsCollection.updateOne({id: commentId},
-                    {$push: {"dislikesInfo.usersPutDislikes": userLikeInfo}})
-                return true
+        let userLikeInfoToAdd: UserLikeInfo = {
+            userId: userLikeInfo.userId,
+            createdAt: userLikeInfo.createdAt,
+            userStatus: likeStatus
+        }
 
-            } else {
-                return false
-            }
+        const commentInstance = await CommentsModelClass.findOne({_id: commentId})
 
+        if (!commentInstance) {
+            return false
+        }
+
+        commentInstance.usersEngagement.push(userLikeInfoToAdd)
+
+
+        try {
+            await commentInstance.save();
+            return true
         } catch (error) {
             console.log(error)
             return false
@@ -81,23 +108,43 @@ export const commentsRepositories = {
     async deleteUserInfo(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusType): Promise<boolean> {
 
         try {
-            if (likeStatus === "Like") {
-                const deleteUserLike = await commentsCollection.updateOne({id: commentId},
-                    {$pull: {"likesInfo.usersPutLikes": {userId: userLikeInfo.userId}}})
-                return deleteUserLike.matchedCount === 1
-            }
 
-            if (likeStatus === "Dislike") {
-                const deleteUserDislike = await commentsCollection.updateOne({id: commentId},
-                    {$pull: {"dislikesInfo.usersPutDislikes": {userId: userLikeInfo.userId}}})
-                return deleteUserDislike.matchedCount === 1
-            } else {
-                return false
-            }
-        } catch (error) {
+            const commentInstance = await CommentsModelClass.findOne({_id: commentId})
+
+            if (!commentInstance) { return false }
+
+            commentInstance.usersEngagement = commentInstance.usersEngagement.filter(user => user.userId !== userLikeInfo.userId);
+            await commentInstance.save()
+
+            return true
+
+    } catch (error) {
             console.log(error)
             return false
         }
 
-    }
+
+            /*  return result !== null
+
+
+
+              if (likeStatus === "Like") {
+                  const deleteUserLike = await commentsCollection.updateOne({id: commentId},
+                      {$pull: {"likesInfo.usersPutLikes": {userId: userLikeInfo.userId}}})
+                  return deleteUserLike.matchedCount === 1
+              }
+
+              if (likeStatus === "Dislike") {
+                  const deleteUserDislike = await commentsCollection.updateOne({id: commentId},
+                      {$pull: {"dislikesInfo.usersPutDislikes": {userId: userLikeInfo.userId}}})
+                  return deleteUserDislike.matchedCount === 1
+              } else {
+                  return false
+              }
+          } catch (error) {
+              console.log(error)
+              return false
+          }*/
+
+        }
 }

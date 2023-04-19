@@ -30,5 +30,10 @@ export const ipDbRepositories = {
 
         return foundIpInDb
 
+    },
+
+    async deleteALLIps(): Promise<boolean> {
+        const result = await ipCollection.deleteMany({})
+        return result.acknowledged
     }
 }

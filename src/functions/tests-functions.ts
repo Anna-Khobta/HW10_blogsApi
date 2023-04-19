@@ -421,6 +421,7 @@ type testCreateAll = {
 
 
 export const createBlogPostUserLoginComment = async (): Promise<testCreateAll> => {
+
     await clearAllDb()
 
     const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)

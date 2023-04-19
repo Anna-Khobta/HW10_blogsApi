@@ -42,7 +42,6 @@ export const postsRepositories = {
 
 
     async deletePost(id: string): Promise<boolean> {
-
         const result = await PostModelClass.findOneAndDelete({_id: id})
         return result !== null
 

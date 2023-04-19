@@ -1,13 +1,18 @@
-import {CommentDBType, CommentViewType, LikeStatusType, UserLikeInfo, UserViewType} from "../repositories/db/types";
+import {
+    CommentDBType,
+    CommentViewType, CommentWithMongoId, LikeStatusesEnum,
+    UserLikeInfo,
+    UserViewType
+} from "../repositories/db/types";
 import {commentsRepositories} from "../repositories/comments-db-repositories";
-import {commentsCollection} from "../repositories/db/db";
+import {CommentsModelClass} from "../repositories/db/db";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
 
 export const commentsService = {
 
-    _mapCommentFromDBToViewType(comment: CommentDBType): CommentViewType {
+    _mapCommentFromDBToViewType(comment: CommentWithMongoId): CommentViewType {
         return {
-            id: comment.id,
+            id: comment._id.toString(),
             content: comment.content,
             commentatorInfo: {
                 userId: comment.commentatorInfo.userId,
@@ -15,8 +20,8 @@ export const commentsService = {
             },
             createdAt: comment.createdAt,
             likesInfo: {
-                likesCount: comment.likesInfo.likesCount,
-                dislikesCount: comment.dislikesInfo.dislikesCount,
+                likesCount: comment.likesCount,
+                dislikesCount: comment.dislikesCount,
                 myStatus: "None"
             }
         }
@@ -29,28 +34,25 @@ export const commentsService = {
             userLogin: userInfo.login
         }
 
-        const likesInfo = {
-            likesCount: 0,
-            usersPutLikes: []
-        }
-
-        const dislikesInfo = {
-            dislikesCount: 0,
-            usersPutDislikes: []
-        }
-
         const newComment: CommentDBType = {
-            id: (+(new Date())).toString(),
-            postId,
+            //id: (+(new Date())).toString(),
+            postId: postId,
             content: content,
-            commentatorInfo: commentatorInfo,
             createdAt: (new Date()).toISOString(),
-            likesInfo: likesInfo,
-            dislikesInfo: dislikesInfo
+            commentatorInfo: commentatorInfo,
+            likesCount: 0,
+            dislikesCount: 0,
+            usersEngagement: []
         }
-        const newCommentToDb = await commentsRepositories.createComment(newComment)
 
-        return this._mapCommentFromDBToViewType(newCommentToDb)
+        const commentInstance = new CommentsModelClass(newComment)
+        await commentsRepositories.saveComment(commentInstance)
+
+/*        return commentInstance._id.toString()
+
+        const newCommentToDb = await commentsRepositories.createComment(newComment)*/
+
+        return this._mapCommentFromDBToViewType(commentInstance)
 
     },
 
@@ -62,7 +64,7 @@ export const commentsService = {
             userLogin: userInfo.login
         }
 
-        const foundCommentOwner = await commentsCollection.findOne({id: id}, {projection: {_id: 0}})
+        const foundCommentOwner = await CommentsModelClass.findOne({_id: id}).lean()
 
         // как сравнить 2 объекта лучше?
 
@@ -72,17 +74,20 @@ export const commentsService = {
                 return true
             }
         }
-
     },
 
-    async updateComment(id: string, content: string): Promise<boolean | undefined> {
+    async updateComment(id: string, content: string): Promise<boolean> {
 
         let foundCommentById = await commentsRepositories.findCommentById(id)
 
-        if (foundCommentById) {
+        if (!foundCommentById) {return false}
 
-            return await commentsRepositories.updateComment(id, content)
-        }
+        const updateComment = await commentsRepositories.updateComment(id, content)
+
+        if (!updateComment) { return false}
+
+        return true
+
     },
 
     async deleteComment(id: string): Promise<boolean> {
@@ -90,28 +95,27 @@ export const commentsService = {
         return commentsRepositories.deleteComment(id)
     },
 
-    async deleteAllComments(): Promise<boolean> {
+    async deleteAllComments(): Promise<number> {
         return commentsRepositories.deleteAllComments()
 
     },
 
-    async createLikeStatus(userInfo: UserViewType, comment: CommentDBType , likeStatus: LikeStatusType): Promise<boolean> {
+    async createLikeStatus(userInfo: UserViewType, comment: CommentViewType , commentId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
-        console.log({userId: userInfo.id, commentId: comment.id, status: likeStatus, lI: comment.likesInfo})
-
-        const userLikeInfo: UserLikeInfo = {
-            userId: userInfo.id,
-            createdAt: (new Date()).toISOString(),
-        }
+        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null= await commentsQueryRepositories.checkUserLike(commentId, userInfo.id)
+// вернется статус пользователя в формате enam
 
         let likes = comment.likesInfo.likesCount
-        let dislikes = comment.dislikesInfo.dislikesCount
+        let dislikes = comment.likesInfo.dislikesCount
 
-        const checkIfUserHaveAlreadyPurLike = await commentsQueryRepositories.checkUserLike(comment.id, userInfo.id)
+        let userLikeInfo: UserLikeInfo = {
+            userId: userInfo.id,
+            createdAt: (new Date()).toISOString(),
+            userStatus: checkIfUserHaveAlreadyPutLike
+        }
+        if (checkIfUserHaveAlreadyPutLike === likeStatus) return true
 
-        if (checkIfUserHaveAlreadyPurLike === likeStatus) return true
-
-        if (checkIfUserHaveAlreadyPurLike === "None")  {
+        if (checkIfUserHaveAlreadyPutLike === "None")  {
             switch (likeStatus) {
                 case "Like":
                     likes++;
@@ -122,44 +126,45 @@ export const commentsService = {
                 default:
                     break;
             }
-            await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+            await commentsRepositories.addUserLikeInfoInDb(commentId, userLikeInfo, likeStatus)
         }
 
 
-        if (checkIfUserHaveAlreadyPurLike === "Like") {
+        if (checkIfUserHaveAlreadyPutLike === "Like") {
             switch (likeStatus) {
                 case "Dislike":
                     likes--;
                     dislikes++;
-                    await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
-                    await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+                    await commentsRepositories.deleteUserInfo(commentId, userLikeInfo, checkIfUserHaveAlreadyPutLike)
+                    await commentsRepositories.addUserLikeInfoInDb(commentId, userLikeInfo, likeStatus)
                     break;
                 default:
                     likes --;
-                    await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
+                    await commentsRepositories.deleteUserInfo(commentId, userLikeInfo, checkIfUserHaveAlreadyPutLike)
                     break;
             }
         }
 
-        if (checkIfUserHaveAlreadyPurLike === "Dislike") {
+        if (checkIfUserHaveAlreadyPutLike === "Dislike") {
             switch (likeStatus) {
                 case "Like":
                     likes++;
                     dislikes--;
-                    await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
-                    await commentsRepositories.createUserInfo(comment.id, userLikeInfo, likeStatus)
+                    await commentsRepositories.deleteUserInfo(commentId, userLikeInfo, checkIfUserHaveAlreadyPutLike)
+                    await commentsRepositories.addUserLikeInfoInDb(commentId, userLikeInfo, likeStatus)
                     break;
                 default:
                     dislikes--;
-                    await commentsRepositories.deleteUserInfo(comment.id, userLikeInfo, checkIfUserHaveAlreadyPurLike)
+                    await commentsRepositories.deleteUserInfo(commentId, userLikeInfo, checkIfUserHaveAlreadyPutLike)
                     break;
             }
         }
 
-        await commentsRepositories.updateLikesInComment(comment.id, likes, dislikes)
+        await commentsRepositories.updateLikesCountInComment(commentId, likes, dislikes)
 
-        const commentAfter = await commentsCollection.findOne({id: comment.id})
-        console.log({commentAfter})
+/*        const commentAfter = await commentsCollection.findOne({id: commentId})
+
+        console.log({commentAfter})*/
         return true
 
     }

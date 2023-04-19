@@ -56,6 +56,7 @@ export type PostDbType = {
     createdAt: string
 }
 
+/*
 
 export type CommentDBType = {
     id: string,
@@ -76,12 +77,43 @@ export type CommentDBType = {
     }
 
 }
+*/
+
+
+
+export type CommentDBType = {
+    //id: string,
+    postId: string,
+    content: string,
+    createdAt: string,
+    commentatorInfo: {
+        userId: string,
+        userLogin: string
+    },
+    likesCount: number,
+    dislikesCount: number,
+    usersEngagement: UserLikeInfo[]
+}
 
 
 export type UserLikeInfo = {
     userId: string,
-    createdAt: string
+    createdAt: string,
+    userStatus: LikeStatusesEnum
 }
+
+
+export type CommentWithMongoId = CommentDBType & { _id: ObjectId; }
+
+
+
+
+
+/*
+export type UserLikeInfo = {
+    userId: string,
+    createdAt: string
+}*/
 
 export enum LikeStatusesEnum  {
     Like = "Like",

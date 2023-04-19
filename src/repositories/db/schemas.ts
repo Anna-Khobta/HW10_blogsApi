@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import {PostDbType, UserDbType} from "./types";
+import {CommentDBType, LikeStatusesEnum, PostDbType, UserDbType} from "./types";
 
 export const blogSchema = new mongoose.Schema({
     id: String,
@@ -39,10 +39,8 @@ passwordRecovery: {
     }
 })
 
-/*
-
 export const commentSchema = new mongoose.Schema<CommentDBType>({
-    id: String,
+    //id: String,
     postId: String,
     content: String,
     createdAt: String,
@@ -50,22 +48,16 @@ export const commentSchema = new mongoose.Schema<CommentDBType>({
         userId: String,
         userLogin: String
     },
-    usersEngagement: [{userId: String, createdAt: String, userStatus: LikeStatusesEnum}]
-
+    likesCount: Number,
+    dislikesCount: Number,
+    usersEngagement:
+        [{ userId: String,
+            createdAt: String,
+            userStatus: {
+                type: String,
+                enum: Object.values(LikeStatusesEnum),
+                default: LikeStatusesEnum.None
+            }}]
 });
 
 
-
-type CommentDBType = {
-    id: string,
-    postId: string
-    content: string,
-    createdAt: string,
-    commentatorInfo: {
-        userId: string,
-        userLogin: string
-    },
-    usersEngagement: [{userId: String, createdAt: String, userStatus: LikeStatusesEnum }]
-
-}
-*/

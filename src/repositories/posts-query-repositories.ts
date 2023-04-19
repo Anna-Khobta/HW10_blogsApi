@@ -32,22 +32,26 @@ export const postsQueryRepositories = {
 
     async findPostById(createdId: string): Promise<PostViewType | null> {
 
-        const post = await PostModelClass.findById(createdId).lean()
+        try {
+            const post = await PostModelClass.findById(createdId).lean()
 
-        if (!post) {
+            if (!post) {
+                return null
+            }
+
+            const postView = {
+                id: post._id.toString(),
+                title: post.title,
+                shortDescription: post.shortDescription,
+                content: post.content,
+                blogId: post.blogId,
+                blogName: post.blogName,
+                createdAt: post.createdAt
+            }
+            return postView
+        } catch (error){
             return null
         }
-
-        const postView = {
-            id: post._id.toString(),
-            title: post.title,
-            shortDescription: post.shortDescription,
-            content: post.content,
-            blogId: post.blogId,
-            blogName: post.blogName,
-            createdAt: post.createdAt
-        }
-        return postView
     },
 
     async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number): Promise<PostsWithPagination> {

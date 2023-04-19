@@ -17,7 +17,7 @@ import {
     getCommentsWithPagination,
     getNewCommentWithLike,
     updateComment,
-    updateCommentLikeStatus
+    updateCommentLikeStatus,
 } from "../src/functions/tests-functions";
 import {client} from "../src/repositories/db/db";
 import {
@@ -214,44 +214,49 @@ describe('/Comments', () => {
                 userId: createNewUser.body.id,
                 userLogin: createNewUser.body.login
             },
-            createdAt: expect.any(String)
+            createdAt: expect.any(String),
+            likesInfo: {
+                likesCount: 0,
+                dislikesCount: 0,
+                myStatus: LikeStatusesEnum.None
+            }
         }
 
         expect(createNewComment.body).toEqual(expectedComment)
 
     })
 
-        it('update comment, than delete comment', async () => {
+    it('update comment, than delete comment', async () => {
 
-            await clearAllDb()
+        await clearAllDb()
 
-            const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
-            expect(createNewBlog.status).toBe(201)
+        const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
+        expect(createNewBlog.status).toBe(201)
 
-            const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
-            expect(createNewPost.status).toBe(201)
+        const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
+        expect(createNewPost.status).toBe(201)
 
-            const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
-            expect(createNewUser.status).toBe(201)
+        const createNewUser = await createUser(myLogin, myPassword, myEmail, basicAuth)
+        expect(createNewUser.status).toBe(201)
 
-            const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
-            expect(loginMyUser.status).toBe(200)
+        const loginMyUser = await authLogin(myLoginOrEmail, myPassword)
+        expect(loginMyUser.status).toBe(200)
 
-            const createdUserAccessToken = loginMyUser.body.accessToken
+        const createdUserAccessToken = loginMyUser.body.accessToken
 
-            const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
-            expect(createNewComment.status).toBe(201)
+        const createNewComment = await createComment(createNewPost.body.id, createdUserAccessToken)
+        expect(createNewComment.status).toBe(201)
 
-            const updateNewComment = await updateComment(createNewComment.body.id, createdUserAccessToken)
-            expect(updateNewComment.status).toBe(204)
+        const updateNewComment = await updateComment(createNewComment.body.id, createdUserAccessToken)
+        expect(updateNewComment.status).toBe(204)
 
-            const deleteUpdateComment = await deleteComment(createNewComment.body.id, createdUserAccessToken)
-            expect(deleteUpdateComment.status).toBe(204)
+        const deleteUpdateComment = await deleteComment(createNewComment.body.id, createdUserAccessToken)
+        expect(deleteUpdateComment.status).toBe(204)
 
-            const checkIfCommentDeleted = await getCommentById(createNewComment.body.id)
-            expect(checkIfCommentDeleted.status).toBe(404)
+        const checkIfCommentDeleted = await getCommentById(createNewComment.body.id)
+        expect(checkIfCommentDeleted.status).toBe(404)
 
-        })
+    })
 
     it('return comments for special post with pagination', async () => {
 
@@ -270,7 +275,7 @@ describe('/Comments', () => {
         expect(loginMyUser.status).toBe(200)
 
         const url = "/posts/" + createNewPost.body.id + '/comments'
-        const body = {content : commentContent}
+        const body = {content: commentContent}
         const auth = "Bearer" + " " + loginMyUser.body.accessToken
 
         const create13Comments = await createSeveralItems(13, url, body, auth)
@@ -281,13 +286,15 @@ describe('/Comments', () => {
             content: expect.any(String),
             commentatorInfo: {
                 userId: createNewUser.body.id,
-                userLogin: createNewUser.body.login },
-            createdAt: expect.any(String) }
+                userLogin: createNewUser.body.login
+            },
+            createdAt: expect.any(String)
+        }
 
         expect(create13Comments[1]).toMatchObject(expectedComment)
 
-const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
-    "sortDirection=asc", "pageNumber=2" , "pageSize=3", createNewPost.body.id )
+        const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
+            "sortDirection=asc", "pageNumber=2", "pageSize=3", createNewPost.body.id)
         expect(getAllCommentsForSpecialPost.status).toBe(200)
 
         const expectedCommentsWithPagination = {
@@ -301,7 +308,6 @@ const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=cre
 
     })
 })
-
 
 
 describe('/Comments, Likes', () => {
@@ -492,6 +498,8 @@ describe('/Comments, Likes', () => {
     it('Create Comment, dislike the comment by user 1, user 2; ' +
         'like the comment by user 3; get the comment after each like by user 1', async () => {
 
+        //await waitSomeSeconds(5)
+
         await clearAllDb()
 
         const createNewBlog = await createBlog(blogName, blogDescription, blogUrl)
@@ -522,6 +530,7 @@ describe('/Comments, Likes', () => {
                 "dislikesCount": 1,
                 "myStatus": LikeStatusesEnum.Dislike
             }} // спрэд */
+        //TODO изучить
 
         const expectedComment = {
             id: createNewComment.body.id,
@@ -549,7 +558,6 @@ describe('/Comments, Likes', () => {
 
         const updateNewComment2 = await updateCommentLikeStatus(createNewComment.body.id, createdUserAccessToken2, LikeStatusesEnum.Dislike)
         expect(updateNewComment2.status).toBe(204)
-
 
         const getNewComment2By1User = await getNewCommentWithLike(createNewComment.body.id, createdUserAccessToken)
         expect(getNewComment2By1User.status).toBe(200)
@@ -613,7 +621,6 @@ describe('/Comments, Likes', () => {
             "dislikesCount": 1,
             "myStatus": LikeStatusesEnum.Like
         })
-
 
     })
 
@@ -729,6 +736,7 @@ describe('/Comments, Likes', () => {
             }
         }
         expect(getNewCommentStatus3.body).toMatchObject(expectedComment3)
+
     })
 
 
@@ -762,63 +770,58 @@ describe('/Comments, Likes', () => {
         }
         expect(getNewCommentStatusBy2.body).toMatchObject(expectedCommentBy2)
 
-    const getAllComments = await getAllCommentsOfPost(createAll.newPostId, createAll.createdUserAccessToken)
+        const getAllComments = await getAllCommentsOfPost(createAll.newPostId, createAll.createdUserAccessToken)
         expect(getAllComments.status).toBe(200)
-
-
-
 
     })
 
+
+    it(' when try to like comment: should return error ' +
+        'if :id from uri param not found; status 404;', async () => {
+        const createAll = await createBlogPostUserLoginComment()
+
+
+        const likeNewComment = await updateCommentLikeStatus("111",
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+
+        expect(likeNewComment.status).toBe(404)
+    })
+
+
+    it(' when try to like comment: should return error ' +
+        'if :id from uri param not found; status 404;', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const url = "/posts/" + createAll.newPostId + '/comments'
+        const body = {content: commentContent}
+        const auth = "Bearer" + " " + createAll.createdUserAccessToken
+
+        const create13Comments = await createSeveralItems(6, url, body, auth)
+        expect(create13Comments.length).toBe(6)
+
+        const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
+            "sortDirection=asc", "pageNumber=2", "pageSize=3", createAll.newPostId)
+        expect(getAllCommentsForSpecialPost.status).toBe(200)
+
+        //console.log(getAllCommentsForSpecialPost.body)
+
+        const expectedComment = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 0,
+                "dislikesCount": 0,
+                "myStatus": LikeStatusesEnum.None
+            }
+        }
+
+        expect(getAllCommentsForSpecialPost.body.items[0]).toStrictEqual(expectedComment)
+
+    })
 })
-
-// describe.skip('/Comments, Likes2', () => {
-//
-//     jest.setTimeout(3 * 60 * 1000)
-//
-//     beforeAll(async () => {
-//         const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
-//         const client = new MongoClient(mongoUri!)
-//         await client.connect()
-//         await mongoose.connect(mongoUri!);
-//         console.log(" ✅ Connected successfully to mongo db and mongoose");
-//
-//     })
-//
-//     afterAll(async () => {
-//         await client.close();
-//         await mongoose.disconnect();
-//         console.log(" ✅ Closed mongo db and mongoose")
-//     })
-//
-//     it('like the comment by user 1 then get by user 2; ' +
-//         'dislike the comment by user 2 then get by the user 1', async () => {
-//
-//         const createAll = await createBlogPostUserLoginComment()
-//
-//         const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
-//             createAll.createdUserAccessToken, LikeStatusesEnum.Like)
-//         expect(likeNewComment.status).toBe(204)
-//
-//         const getNewCommentStatus = await getNewCommentWithLike(createAll.newCommentId, createAll.createdUserAccessToken)
-//         expect(getNewCommentStatus.status).toBe(200)
-//
-//         const expectedComment = {
-//             id: createAll.newCommentId,
-//             content: createAll.newCommentContent,
-//             commentatorInfo: {
-//                 userId: createAll.newCommentUserId,
-//                 userLogin: createAll.newCommentUserLogin,
-//             },
-//             createdAt: createAll.newCommentCreatedAt,
-//             likesInfo: {
-//                 "likesCount": 1,
-//                 "dislikesCount": 0,
-//                 "myStatus": LikeStatusesEnum.Like
-//             }
-//         }
-//         expect(getNewCommentStatus.body).toMatchObject(expectedComment)
-//
-//     })
-// })
-

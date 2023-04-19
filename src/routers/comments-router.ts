@@ -21,21 +21,15 @@ commentsRouter
 
             const checkUserOwnComment = await commentsService.checkUser(userInfo!, req.params.id)
 
+            if (!checkUserOwnComment)  { return res.sendStatus(403) }
+
             const updatedCommentWithoutId = await commentsService.updateComment(req.params.id, req.body.content)
 
-            if (updatedCommentWithoutId) {
-                // TODO переделать в отрицание
-                if (checkUserOwnComment) {
+            if (!updatedCommentWithoutId) { return res.sendStatus (404)}
 
-                    res.sendStatus(204)
+            return res.sendStatus(204)
 
-                } else {
-                    res.sendStatus(403)
-                }
 
-            } else {
-                return res.sendStatus(404)
-            }
         })
 
     //return comment by id
@@ -44,36 +38,19 @@ commentsRouter
         async (req: Request, res: Response) => {
 
             const userInfo = req.user
-            console.log(userInfo)
+            const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
 
-
-        const findCommentById = await commentsQueryRepositories.findCommentById(req.params.id)
-            if (!findCommentById) {
-                return res.sendStatus(400)
-            }
+            if (!findCommentById) { return res.sendStatus(404) }
 
             if (!userInfo) {
-                return res.status(200).send(
-                    {
-                        "id": findCommentById.id,
-                        "content": findCommentById.content,
-                        "commentatorInfo": {
-                            "userId": findCommentById.commentatorInfo.userId,
-                            "userLogin": findCommentById.commentatorInfo.userLogin,
-                        },
-                        "createdAt": findCommentById.createdAt,
-                        "likesInfo": {
-                            "likesCount": findCommentById.likesInfo.likesCount,
-                            "dislikesCount": findCommentById.dislikesInfo.dislikesCount,
-                            "myStatus": "None"
-                        }
-                    })
+                return res.status(200).send(findCommentById)
             } else {
-                const checkUserStatus = await commentsQueryRepositories.checkUserLike(findCommentById.id, userInfo.id)
+
+                const checkUserStatus = await commentsQueryRepositories.checkUserLike(req.params.id, userInfo.id)
 
                 return res.status(200).send(
                     {
-                        "id": findCommentById.id,
+                        "id": req.params.id,
                         "content": findCommentById.content,
                         "commentatorInfo": {
                             "userId": findCommentById.commentatorInfo.userId,
@@ -82,14 +59,14 @@ commentsRouter
                         "createdAt": findCommentById.createdAt,
                         "likesInfo": {
                             "likesCount": findCommentById.likesInfo.likesCount,
-                            "dislikesCount": findCommentById.dislikesInfo.dislikesCount,
+                            "dislikesCount": findCommentById.likesInfo.dislikesCount,
                             "myStatus": checkUserStatus.toString()
                         }
                     })
             }
 
-
             })
+
 
     //delete comment by id
     .delete("/:id",
@@ -103,7 +80,6 @@ commentsRouter
             if (findCommentById) {
 
                 const checkUserOwnComment = await commentsService.checkUser(userInfo!, req.params.id)
-
 
                 if (checkUserOwnComment) {
 
@@ -131,19 +107,21 @@ commentsRouter
             const userInfo = req.user // id юзера, который залогинен и хочет лайкнуть
             const likeStatus = req.body.likeStatus
 
+            console.log(req.params.commentId)
+
             const findCommentById = await commentsQueryRepositories.findCommentById(req.params.commentId)
+
+            console.log(findCommentById)
 
             if (!findCommentById) {
                 return res.sendStatus(404)
             }
 
-            const updateLikeStatus = await commentsService.createLikeStatus(userInfo, findCommentById, likeStatus)
+            const updateLikeStatus = await commentsService.createLikeStatus(userInfo, findCommentById, req.params.commentId, likeStatus)
 
             if (!updateLikeStatus) {
                 return res.sendStatus(400)
-            }
-
-            return res.sendStatus(204)
+            } else return res.sendStatus(204)
 
         })
 

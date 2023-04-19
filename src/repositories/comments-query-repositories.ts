@@ -1,22 +1,26 @@
-import {SortDirection} from "mongodb";
-import {commentsCollection} from "./db/db";
-import {CommentDBType, LikeStatusType} from "./db/types";
+import {CommentsModelClass} from "./db/db";
+import {CommentViewType, LikeStatusesEnum} from "./db/types";
+import {SortOrder} from "mongoose";
 
 
 export const commentsQueryRepositories = {
 
     async findCommentsForPost (postId: string, page: number, limit:number,
-                               sortDirection: SortDirection,
+                               sortDirection: SortOrder,
                                sortBy: string, skip: number) {
 
         const filter = {postId}
-        const findComments = await commentsCollection.find({postId: postId})
-            .sort({ [sortBy]: sortDirection })
+
+        const findComments = await CommentsModelClass.find(
+            {postId: postId},
+            {_id: 0, __v: 0})
             .skip(skip)
             .limit(limit)
-            .toArray()
+            .sort({sortBy: sortDirection})
+            .lean()
 
-        const total = await commentsCollection.countDocuments(filter)
+
+        const total = await CommentsModelClass.countDocuments(filter)
         const pagesCount = Math.ceil(total/limit)
 
 /*        const items = findUsers.map(user => ({
@@ -54,31 +58,50 @@ export const commentsQueryRepositories = {
         }
     },
 
-    async findCommentById(id: string): Promise<CommentDBType | null> {
+    async findCommentById(commentId: string): Promise<CommentViewType | null> {
 
-        const foundComment: CommentDBType | null = await commentsCollection.findOne({id: id})
+        try {
+            const foundComment = await CommentsModelClass.findById(commentId).lean()
+            if (!foundComment) {return null}
 
-        if (!foundComment) {return null}
+            return {
+                id: commentId,
+                content: foundComment.content,
+                commentatorInfo: {
+                    userId: foundComment.commentatorInfo.userId,
+                    userLogin: foundComment.commentatorInfo.userLogin,
+                },
+                createdAt: foundComment.createdAt,
+                likesInfo: {
+                    likesCount: foundComment.likesCount,
+                    dislikesCount: foundComment.dislikesCount,
+                    myStatus: "None"
+                }
+            }
 
-        return foundComment
-
-    },
-
-    async checkUserLike (commentId: string, userId: string): Promise<LikeStatusType> {
-
-        const checkUserLikeInComment = await commentsCollection.findOne({ id: commentId, "likesInfo.usersPutLikes.userId": userId})
-
-        if (checkUserLikeInComment) {
-            return "Like"
+        } catch (error) {
+            return null
         }
 
-        const checkUserDislikeInComment = await commentsCollection.findOne({ id: commentId, "dislikesInfo.usersPutDislikes.userId": userId})
+        },
 
-        if (checkUserDislikeInComment) {
-            return "Dislike"
+    async checkUserLike (commentId: string, userId: string): Promise<LikeStatusesEnum> {
+
+        try {
+
+            const commentInstance = await CommentsModelClass.findById({_id: commentId})
+
+            const userLikeInfo = commentInstance!.usersEngagement.find(
+                (user) => user.userId === userId
+            );
+
+            if (!userLikeInfo) {
+                return LikeStatusesEnum.None;
+            }
+            return userLikeInfo.userStatus
+        } catch (error) {
+            console.log(error);
+            return LikeStatusesEnum.None;
         }
-
-        return "None"
-
     }
 }
