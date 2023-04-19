@@ -19,20 +19,83 @@ export const commentsQueryRepositories = {
             .sort({sortBy: sortDirection})
             .lean()
 
-        console.log(findComments)
+
+        const mappedComments = findComments.map(comment => {
+            return {
+                id: comment._id.toString(),
+                content: comment.content,
+                commentatorInfo: {
+                    userId: comment.commentatorInfo.userId,
+                    userLogin: comment.commentatorInfo.userLogin
+                },
+                createdAt: comment.createdAt,
+                likesInfo: {
+                    likesCount: comment.likesCount,
+                    dislikesCount: comment.dislikesCount,
+                    myStatus: "None" // Set the default value for myStatus
+                }
+            }
+        })
+
 
         const total = await CommentsModelClass.countDocuments(filter)
         const pagesCount = Math.ceil(total/limit)
-
 
         return {
             pagesCount: pagesCount,
             page: page,
             pageSize: limit,
             totalCount: total,
-            items: findComments
+            items: mappedComments
         }
     },
+
+
+    async findCommentsForPostWithUser (postId: string, page: number, limit:number,
+                               sortDirection: SortOrder,
+                               sortBy: string, skip: number, userId: string) {
+
+        const filter = {postId}
+
+        const findComments = await CommentsModelClass.find(
+            {postId: postId},
+            {__v: 0})
+            .skip(skip)
+            .limit(limit)
+            .sort({sortBy: sortDirection})
+            .lean()
+
+
+        const mappedComments = findComments.map(comment => {
+            return {
+                id: comment._id.toString(),
+                content: comment.content,
+                commentatorInfo: {
+                    userId: comment.commentatorInfo.userId,
+                    userLogin: comment.commentatorInfo.userLogin
+                },
+                createdAt: comment.createdAt,
+                likesInfo: {
+                    likesCount: comment.likesCount,
+                    dislikesCount: comment.dislikesCount,
+                    myStatus: "None" // Set the default value for myStatus
+                }
+            }
+        })
+
+
+        const total = await CommentsModelClass.countDocuments(filter)
+        const pagesCount = Math.ceil(total/limit)
+
+        return {
+            pagesCount: pagesCount,
+            page: page,
+            pageSize: limit,
+            totalCount: total,
+            items: mappedComments
+        }
+    },
+
 
     async findCommentById(commentId: string): Promise<CommentViewType | null> {
 

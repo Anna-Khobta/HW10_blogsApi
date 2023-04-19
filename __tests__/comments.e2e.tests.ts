@@ -14,7 +14,7 @@ import {
     getBlogById,
     getBlogsWithPagination,
     getCommentById,
-    getCommentsWithPagination,
+    getCommentsWithPagination, getCommentsWithPaginationWithAuth,
     getNewCommentWithLike,
     updateComment,
     updateCommentLikeStatus,
@@ -788,8 +788,7 @@ describe('/Comments, Likes', () => {
     })
 
 
-    it(' when try to like comment: should return error ' +
-        'if :id from uri param not found; status 404;', async () => {
+    it(' like post, auth, get 6 comments for post', async () => {
 
         const createAll = await createBlogPostUserLoginComment()
 
@@ -799,6 +798,44 @@ describe('/Comments, Likes', () => {
 
         const create6Comments = await createSeveralItems(6, url, body, auth)
         expect(create6Comments.length).toBe(6)
+
+        const likeNewComment = await updateCommentLikeStatus(createAll.newCommentId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+
+        const getAllCommentsForSpecialPost = await getCommentsWithPaginationWithAuth("sortBy=createdAt",
+            "sortDirection=asc", "pageNumber=2", "pageSize=3", createAll.newPostId, createAll.createdUserAccessToken)
+        expect(getAllCommentsForSpecialPost.status).toBe(200)
+
+        const expectedComment = {
+            id: createAll.newCommentId,
+            content: createAll.newCommentContent,
+            commentatorInfo: {
+                userId: createAll.newCommentUserId,
+                userLogin: createAll.newCommentUserLogin,
+            },
+            createdAt: createAll.newCommentCreatedAt,
+            likesInfo: {
+                "likesCount": 1,
+                "dislikesCount": 0,
+                "myStatus": LikeStatusesEnum.Like
+            }
+        }
+        expect(getAllCommentsForSpecialPost.body.items[0]).toStrictEqual(expectedComment)
+
+    })
+
+    it('get 6 comments for post', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const url = "/posts/" + createAll.newPostId + '/comments'
+        const body = {content: commentContent}
+        const auth = "Bearer" + " " + createAll.createdUserAccessToken
+
+        const create6Comments = await createSeveralItems(6, url, body, auth)
+        expect(create6Comments.length).toBe(6)
+
+
 
         const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
             "sortDirection=asc", "pageNumber=2", "pageSize=3", createAll.newPostId)
@@ -820,7 +857,6 @@ describe('/Comments, Likes', () => {
                 "myStatus": LikeStatusesEnum.None
             }
         }
-
         expect(getAllCommentsForSpecialPost.body.items[0]).toStrictEqual(expectedComment)
 
     })

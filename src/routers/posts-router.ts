@@ -134,8 +134,12 @@ postsRouter
         if (!userInfo) {
             const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
             res.status(200).send(foundComments)
-
         }
+            const foundCommentsWithUserId = await commentsQueryRepositories.findCommentsForPostWithUser(post.id, page, limit, sortDirection, sortBy, skip, userInfo!.id )
+            res.status(200).send(foundCommentsWithUserId)
+
+
+
 
     })
 

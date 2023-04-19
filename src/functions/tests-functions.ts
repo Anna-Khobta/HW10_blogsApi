@@ -330,6 +330,19 @@ export const getCommentsWithPagination =
         .get('/posts/' + postId + "/comments/" + "?" + sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
 }
 
+export const getCommentsWithPaginationWithAuth =
+    async (sortBy:string|null,
+           sortDirection: string|null,
+           pageNumber: string|null,
+           pageSize: string|null,
+           postId:string,
+           userAccessToken: string) => {
+
+        return request(app)
+            .get('/posts/' + postId + "/comments/" + "?" + sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+            .auth(userAccessToken, {type: 'bearer'})
+    }
+
 export const updateComment = async (commentId: string, userAccessToken: string) => {
 
     return request(app)
