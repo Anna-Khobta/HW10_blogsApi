@@ -797,8 +797,8 @@ describe('/Comments, Likes', () => {
         const body = {content: commentContent}
         const auth = "Bearer" + " " + createAll.createdUserAccessToken
 
-        const create13Comments = await createSeveralItems(6, url, body, auth)
-        expect(create13Comments.length).toBe(6)
+        const create6Comments = await createSeveralItems(6, url, body, auth)
+        expect(create6Comments.length).toBe(6)
 
         const getAllCommentsForSpecialPost = await getCommentsWithPagination("sortBy=createdAt",
             "sortDirection=asc", "pageNumber=2", "pageSize=3", createAll.newPostId)
