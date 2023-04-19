@@ -57,8 +57,6 @@ export const commentsQueryRepositories = {
 
         const filter = {postId}
 
-        console.log(sortDirection, 'pagination')
-
         const findComments = await CommentsModelClass.find(
             {postId: postId},
             {__v: 0})

@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 export const jwtService = {
     async createJwtToken(id: string) {
 
-        const accessToken = jwt.sign({userId: id}, settings.JWT_SECRET, {expiresIn: '8m'})
-        const refreshToken = jwt.sign({userId: id, deviceId: uuidv4()}, settings.JWT_SECRET, {expiresIn: '10m'})
+        const accessToken = jwt.sign({userId: id}, settings.JWT_SECRET, {expiresIn: '10m'})
+        const refreshToken = jwt.sign({userId: id, deviceId: uuidv4()}, settings.JWT_SECRET, {expiresIn: '20m'})
 
         const decodedRefreshToken = jwt.decode(refreshToken)
 
