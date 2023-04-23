@@ -17,7 +17,15 @@ export const postSchema = new mongoose.Schema<PostDbType>( {
     content: String,
     blogId: String,
     blogName: String,
-    createdAt: String
+    createdAt: String,
+    usersEngagement:
+        [{ userId: String,
+            createdAt: String,
+            userStatus: {
+                type: String,
+                enum: Object.values(LikeStatusesEnum),
+                default: LikeStatusesEnum.None
+            }}]
 })
 
 export const userSchema = new mongoose.Schema<UserDbType>({

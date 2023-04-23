@@ -1,6 +1,6 @@
 import {CommentsModelClass} from "./db/db";
 
-import {CommentDBType, LikeStatusesEnum, LikeStatusType, UserLikeInfo} from "./db/types";
+import {CommentDBType, LikeStatusesEnum, UserLikeInfo} from "./db/types";
 import {HydratedDocument} from "mongoose";
 
 
@@ -64,7 +64,9 @@ export const commentsRepositories = {
 
         const commentInstance = await CommentsModelClass.findOne({_id: commentId})
 
-        if (!commentInstance) { return false}
+        if (!commentInstance) {
+            return false
+        }
 
         commentInstance.likesCount = likes;
         commentInstance.dislikesCount = dislikes;
@@ -105,46 +107,24 @@ export const commentsRepositories = {
         }
     },
 
-    async deleteUserInfo(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusType): Promise<boolean> {
+    async deleteUserInfo(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
         try {
 
             const commentInstance = await CommentsModelClass.findOne({_id: commentId})
 
-            if (!commentInstance) { return false }
+            if (!commentInstance) {
+                return false
+            }
 
             commentInstance.usersEngagement = commentInstance.usersEngagement.filter(user => user.userId !== userLikeInfo.userId);
             await commentInstance.save()
 
             return true
 
-    } catch (error) {
+        } catch (error) {
             console.log(error)
             return false
         }
-
-
-            /*  return result !== null
-
-
-
-              if (likeStatus === "Like") {
-                  const deleteUserLike = await commentsCollection.updateOne({id: commentId},
-                      {$pull: {"likesInfo.usersPutLikes": {userId: userLikeInfo.userId}}})
-                  return deleteUserLike.matchedCount === 1
-              }
-
-              if (likeStatus === "Dislike") {
-                  const deleteUserDislike = await commentsCollection.updateOne({id: commentId},
-                      {$pull: {"dislikesInfo.usersPutDislikes": {userId: userLikeInfo.userId}}})
-                  return deleteUserDislike.matchedCount === 1
-              } else {
-                  return false
-              }
-          } catch (error) {
-              console.log(error)
-              return false
-          }*/
-
-        }
+    }
 }

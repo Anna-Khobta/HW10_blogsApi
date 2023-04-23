@@ -1,6 +1,8 @@
 import {
     CommentDBType,
-    CommentViewType, CommentWithMongoId, LikeStatusesEnum,
+    CommentViewType,
+    CommentWithMongoId,
+    LikeStatusesEnum,
     UserLikeInfo,
     UserViewType
 } from "../repositories/db/types";
@@ -22,7 +24,7 @@ export const commentsService = {
             likesInfo: {
                 likesCount: comment.likesCount,
                 dislikesCount: comment.dislikesCount,
-                myStatus: "None"
+                myStatus: LikeStatusesEnum.None
             }
         }
     },
@@ -48,9 +50,9 @@ export const commentsService = {
         const commentInstance = new CommentsModelClass(newComment)
         await commentsRepositories.saveComment(commentInstance)
 
-/*        return commentInstance._id.toString()
+        /*        return commentInstance._id.toString()
 
-        const newCommentToDb = await commentsRepositories.createComment(newComment)*/
+                const newCommentToDb = await commentsRepositories.createComment(newComment)*/
 
         return this._mapCommentFromDBToViewType(commentInstance)
 
@@ -80,11 +82,15 @@ export const commentsService = {
 
         let foundCommentById = await commentsRepositories.findCommentById(id)
 
-        if (!foundCommentById) {return false}
+        if (!foundCommentById) {
+            return false
+        }
 
         const updateComment = await commentsRepositories.updateComment(id, content)
 
-        if (!updateComment) { return false}
+        if (!updateComment) {
+            return false
+        }
 
         return true
 
@@ -100,22 +106,29 @@ export const commentsService = {
 
     },
 
-    async createLikeStatus(userInfo: UserViewType, comment: CommentViewType , commentId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
+    async createLikeStatus(userInfo: UserViewType, comment: CommentViewType, commentId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
-        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null= await commentsQueryRepositories.checkUserLike(commentId, userInfo.id)
-// вернется статус пользователя в формате enam
+        // вернется статус пользователя в формате enam
+        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await commentsQueryRepositories.checkUserLike(commentId, userInfo.id)
+
+
+        if (!checkIfUserHaveAlreadyPutLike) {
+            return false
+        }
+        // новая строчка. если произошла ошибка в бд, вернется null
 
         let likes = comment.likesInfo.likesCount
         let dislikes = comment.likesInfo.dislikesCount
 
+
         let userLikeInfo: UserLikeInfo = {
             userId: userInfo.id,
             createdAt: (new Date()).toISOString(),
-            userStatus: checkIfUserHaveAlreadyPutLike
+            userStatus: checkIfUserHaveAlreadyPutLike || LikeStatusesEnum.None
         }
         if (checkIfUserHaveAlreadyPutLike === likeStatus) return true
 
-        if (checkIfUserHaveAlreadyPutLike === "None")  {
+        if (checkIfUserHaveAlreadyPutLike === "None") {
             switch (likeStatus) {
                 case "Like":
                     likes++;
@@ -139,7 +152,7 @@ export const commentsService = {
                     await commentsRepositories.addUserLikeInfoInDb(commentId, userLikeInfo, likeStatus)
                     break;
                 default:
-                    likes --;
+                    likes--;
                     await commentsRepositories.deleteUserInfo(commentId, userLikeInfo, checkIfUserHaveAlreadyPutLike)
                     break;
             }
@@ -162,9 +175,9 @@ export const commentsService = {
 
         await commentsRepositories.updateLikesCountInComment(commentId, likes, dislikes)
 
-/*        const commentAfter = await commentsCollection.findOne({id: commentId})
+        /*        const commentAfter = await commentsCollection.findOne({id: commentId})
 
-        console.log({commentAfter})*/
+                console.log({commentAfter})*/
         return true
 
     }

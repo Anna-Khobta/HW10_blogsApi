@@ -48,6 +48,8 @@ commentsRouter
 
                 const checkUserStatus = await commentsQueryRepositories.checkUserLike(req.params.id, userInfo.id)
 
+                if (!checkUserStatus) { return res.sendStatus(404) }
+
                 return res.status(200).send(
                     {
                         "id": req.params.id,

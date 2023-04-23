@@ -114,7 +114,7 @@ export const commentsQueryRepositories = {
                 likesInfo: {
                     likesCount: foundComment.likesCount,
                     dislikesCount: foundComment.dislikesCount,
-                    myStatus: "None"
+                    myStatus: LikeStatusesEnum.None
                 }
             }
 
@@ -124,7 +124,7 @@ export const commentsQueryRepositories = {
 
         },
 
-    async checkUserLike (commentId: string, userId: string): Promise<LikeStatusesEnum> {
+    async checkUserLike (commentId: string, userId: string): Promise<LikeStatusesEnum | null> {
 
         try {
 
@@ -136,11 +136,12 @@ export const commentsQueryRepositories = {
 
             if (!userLikeInfo) {
                 return LikeStatusesEnum.None;
+            } else {
+                return userLikeInfo.userStatus
             }
-            return userLikeInfo.userStatus
         } catch (error) {
             console.log(error);
-            return LikeStatusesEnum.None;
+            return null
         }
     }
 }

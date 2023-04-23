@@ -9,7 +9,7 @@ import {postsService} from "../domain/posts-service";
 import {getPagination} from "../functions/pagination";
 import {postsQueryRepositories} from "../repositories/posts-query-repositories";
 import {authBearerFindUser, authBearerMiddleware} from "../middlewares/authToken";
-import {contentCommentValidation} from "../middlewares/comments-validation";
+import {contentCommentValidation, likeStatusValidation} from "../middlewares/comments-validation";
 import {commentsService} from "../domain/comments-service";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
 
@@ -138,3 +138,31 @@ postsRouter
             res.status(200).send(foundCommentsWithUserId)
         }
     })
+
+
+    // Make like/unlike/dislike/undislike operation
+    .put('/:postId/like-status',
+        likeStatusValidation,
+        authBearerMiddleware,
+        inputValidationMiddleware,
+        async (req: Request, res: Response) => {
+
+            const userInfo = req.user // id юзера, который залогинен и хочет лайкнуть
+            const likeStatus = req.body.likeStatus
+
+            const findPostById = await postsQueryRepositories.findPostById(req.params.postId)
+
+            if (!findPostById) {
+                return res.sendStatus(404)
+            }
+
+            const updateLikeStatus = await postsService.createLikeStatus(userInfo, findPostById, req.params.postId, likeStatus)
+
+
+
+            if (!updateLikeStatus) {
+                return res.sendStatus(400)
+            } else return res.sendStatus(204)
+
+        })
+

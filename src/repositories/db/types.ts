@@ -19,6 +19,7 @@ export type BlogsWithPagination = {
 }
 
 
+
 export type PostViewType = {
     id: string,
     title: string,
@@ -27,6 +28,9 @@ export type PostViewType = {
     blogId: string,
     blogName: string,
     createdAt: string,
+    likesCount: number,
+    dislikesCount: number,
+    myStatus: LikeStatusesEnum
 
 }
 
@@ -53,32 +57,12 @@ export type PostDbType = {
     content: string,
     blogId: string,
     blogName: string,
-    createdAt: string
-}
-
-/*
-
-export type CommentDBType = {
-    id: string,
-    postId: string
-    content: string,
     createdAt: string,
-    commentatorInfo: {
-        userId: string,
-        userLogin: string
-    },
-    likesInfo: {
-        likesCount: number | 0,
-        usersPutLikes: UserLikeInfo[],
-    },
-    dislikesInfo: {
-        dislikesCount: number | 0
-        usersPutDislikes: UserLikeInfo[],
-    }
+    likesCount: number,
+    dislikesCount: number,
+    usersEngagement: UserLikeInfo[]
 
 }
-*/
-
 
 
 export type CommentDBType = {
@@ -121,7 +105,7 @@ export enum LikeStatusesEnum  {
     None = "None"
 }
 
-export type LikeStatusType = "Like" | "Dislike" | "None"
+// export type LikeStatusType = "Like" | "Dislike" | "None"
 
 
 export type CommentViewType = {
@@ -135,7 +119,7 @@ export type CommentViewType = {
     likesInfo: {
         likesCount: number,
         dislikesCount: number,
-        myStatus: LikeStatusType
+        myStatus: LikeStatusesEnum
     }
 }
 

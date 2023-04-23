@@ -1,5 +1,5 @@
-import {PostModelClass} from "./db/db";
-import {PostsWithPagination, PostViewType} from "./db/types";
+import {CommentsModelClass, PostModelClass} from "./db/db";
+import {LikeStatusesEnum, PostsWithPagination, PostViewType} from "./db/types";
 import {SortOrder} from "mongoose";
 
 
@@ -46,8 +46,12 @@ export const postsQueryRepositories = {
                 content: post.content,
                 blogId: post.blogId,
                 blogName: post.blogName,
-                createdAt: post.createdAt
+                createdAt: post.createdAt,
+                likesCount: post.likesCount,
+                dislikesCount: post.dislikesCount,
+                myStatus: LikeStatusesEnum.None
             }
+
             return postView
         } catch (error){
             return null
@@ -72,6 +76,26 @@ export const postsQueryRepositories = {
             pageSize: limit,
             totalCount: total,
             items: findPosts
+        }
+    },
+
+    async checkUserLike (postId: string, userId: string): Promise<LikeStatusesEnum | null> {
+
+        try {
+
+            const commentInstance = await CommentsModelClass.findById({_id: postId})
+
+            const userLikeInfo = commentInstance!.usersEngagement.find(
+                (user) => user.userId === userId
+            );
+
+            if (!userLikeInfo) {
+                return null;
+            }
+            return userLikeInfo.userStatus
+        } catch (error) {
+            console.log(error);
+            return null;
         }
     }
 }
