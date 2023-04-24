@@ -3,7 +3,7 @@ import {
     clearAllDb,
     createBlog, createBlogPostUserLoginComment,
     createPost, createSeveralItems, deletePostById,
-    getPostById,
+    getPostById, getPostByIdWithAuth,
     getPostsWithPagination, updatePost, updatePostLikeStatus
 } from "../src/functions/tests-functions";
 import {
@@ -43,12 +43,16 @@ describe('posts, put like-status', () => {
 
         const createAll = await createBlogPostUserLoginComment()
 
+
+
         const likeNewPost = await updatePostLikeStatus(createAll.newPostId,
             createAll.createdUserAccessToken, LikeStatusesEnum.Like)
         expect(likeNewPost.status).toBe(204)
 
-        const getNewPost= await getPostById(createAll.newPostId)
+        const getNewPost= await getPostByIdWithAuth(createAll.newPostId,  createAll.createdUserAccessToken)
         expect(getNewPost.status).toBe(200)
+
+        console.log(getNewPost.body, "getNewPost.body")
 
         const expectedPost = {
             id: createAll.newPostId,
