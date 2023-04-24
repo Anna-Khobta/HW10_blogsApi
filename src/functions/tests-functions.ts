@@ -74,6 +74,14 @@ export const getPostById = async (id:string|null) => {
         .get('/posts/' + id)
 }
 
+export const getPostByIdWithAuth = async (postId: string, userAccessToken: string) => {
+
+    return request(app)
+        .get('/posts/' + postId)
+        .auth(userAccessToken, {type: 'bearer'})
+}
+
+
 export const getPostsWithPagination = async (sortBy:string|null,
                                              sortDirection: string|null,
                                              pageNumber: string|null,
@@ -102,6 +110,15 @@ export const deletePostById = async (id: string|null ) => {
         .set('Authorization', basicAuth)
 }
 
+export const updatePostLikeStatus = async (postId: string, userAccessToken: string, likeStatus: LikeStatusesEnum) => {
+
+    return request(app)
+        .put('/posts/' + postId + '/like-status')
+        .auth(userAccessToken, {type: 'bearer'})
+        .send({
+            "likeStatus": likeStatus
+        })
+}
 
 
 
@@ -429,7 +446,14 @@ type testCreateAll = {
     newCommentUserId:string,
     newCommentUserLogin:string,
     newCommentCreatedAt :string,
-    newPostId:string
+    newPostId:string,
+    newPostTitle:string,
+    newPostShortDescription:string,
+    newPostContent:string,
+    newPostCreatedAt:string,
+    newBlogId:string,
+    newBlogName:string
+
 }
 
 
@@ -461,8 +485,19 @@ export const createBlogPostUserLoginComment = async (): Promise<testCreateAll> =
     const newCommentCreatedAt = createNewComment.body.createdAt
 
     const newPostId = createNewPost.body.id
+    const newPostTitle = createNewPost.body.title
+    const newPostShortDescription = createNewPost.body.shortDescription
+    const newPostContent = createNewPost.body.content
+    const newPostCreatedAt = createNewPost.body.createdAt
 
-    return {createdUserAccessToken, newCommentId, newCommentContent, newCommentUserId,newCommentUserLogin, newCommentCreatedAt, newPostId }
+    const newBlogId = createNewBlog.body.id
+    const newBlogName = createNewBlog.body.name
+
+    const newUserLogin = createNewUser.body.login
+    const newUserId = createNewUser.body.id
+
+    return {createdUserAccessToken, newCommentId, newCommentContent, newCommentUserId,newCommentUserLogin, newCommentCreatedAt, newPostId,
+        newPostTitle, newPostShortDescription, newPostContent, newPostCreatedAt, newBlogId, newBlogName}
 }
 
 

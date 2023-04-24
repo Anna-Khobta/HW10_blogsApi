@@ -1,4 +1,4 @@
-import {CommentsModelClass, PostModelClass,} from "./db/db";
+import {PostModelClass,} from "./db/db";
 import {LikeStatusesEnum, PostDbType, UserLikeInfo} from "./db/types";
 import {HydratedDocument} from "mongoose";
 
@@ -53,7 +53,7 @@ async deleteAllPosts(): Promise<number> {
 },
 
 
-    async createUserLikeInfoInDb(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
+    async createUserLikeInfoInDb(postId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
         let userLikeInfoToAdd: UserLikeInfo = {
             userId: userLikeInfo.userId,
@@ -62,7 +62,7 @@ async deleteAllPosts(): Promise<number> {
         }
 
         try {
-            const postInstance = await CommentsModelClass.findOne({_id: commentId})
+            const postInstance = await PostModelClass.findOne({_id: postId})
 
             if (!postInstance) { return false }
 
@@ -89,10 +89,14 @@ async deleteAllPosts(): Promise<number> {
 
             if (!postInstance) { return false}
 
+
+
             let myStatus = postInstance.usersEngagement.find(el => el.userId === userLikeInfoToAdd.userId)
 
+            let foundStatus = myStatus?.userStatus
+
             // myStatus = likeStatus
-            // TODO тут надо доделать апдейт статусов
+            // TODO тут надо доделать апдейт статусов instance method
 
             //myStatus?.userStatus = userLikeInfoToAdd.userStatus;
             //postInstance.usersEngagement.userStatus = userLikeInfoToAdd.userStatus;
@@ -100,6 +104,10 @@ async deleteAllPosts(): Promise<number> {
             postInstance.dislikesCount = dislikes;
 
             await postInstance.save();
+
+           /* const postInstanceTEST = await PostModelClass.findOne({_id: postId})
+            console.log(postInstanceTEST)*/
+
             return true
 
         }  catch (error) {

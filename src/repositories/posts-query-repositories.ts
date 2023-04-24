@@ -1,4 +1,4 @@
-import {CommentsModelClass, PostModelClass} from "./db/db";
+import {PostModelClass} from "./db/db";
 import {LikeStatusesEnum, PostsWithPagination, PostViewType} from "./db/types";
 import {SortOrder} from "mongoose";
 
@@ -83,11 +83,17 @@ export const postsQueryRepositories = {
 
         try {
 
-            const commentInstance = await CommentsModelClass.findById({_id: postId})
+            const postInstance = await PostModelClass.findOne({_id: postId})
 
-            const userLikeInfo = commentInstance!.usersEngagement.find(
+            //console.log(postInstance)
+
+            if (!postInstance) {return null}
+
+            const userLikeInfo = postInstance.usersEngagement.find(
                 (user) => user.userId === userId
             );
+
+            //console.log(userLikeInfo, 'userLikeInfo')
 
             if (!userLikeInfo) {
                 return null;

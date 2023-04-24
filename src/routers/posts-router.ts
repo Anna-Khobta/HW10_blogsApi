@@ -97,8 +97,8 @@ postsRouter
         }
     })
 
-// POSTS - COMMENTS
 
+// POSTS - COMMENTS
 postsRouter
     .post('/:postId/comments',
         authBearerMiddleware,
@@ -157,8 +157,6 @@ postsRouter
             }
 
             const updateLikeStatus = await postsService.createLikeStatus(userInfo, findPostById, req.params.postId, likeStatus)
-
-
 
             if (!updateLikeStatus) {
                 return res.sendStatus(400)

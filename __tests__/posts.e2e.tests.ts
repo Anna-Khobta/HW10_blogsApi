@@ -1,10 +1,10 @@
 import {client} from "../src/repositories/db/db";
 import {
     clearAllDb,
-    createBlog,
+    createBlog, createBlogPostUserLoginComment,
     createPost, createSeveralItems, deletePostById,
     getPostById,
-    getPostsWithPagination, updatePost
+    getPostsWithPagination, updatePost, updatePostLikeStatus
 } from "../src/functions/tests-functions";
 import {
     basicAuth,
@@ -17,6 +17,70 @@ import {
 } from "../src/functions/tests-objects";
 import mongoose from "mongoose";
 import {MongoClient} from "mongodb";
+import {LikeStatusesEnum} from "../src/repositories/db/types";
+
+
+
+describe('posts, put like-status', () => {
+
+    jest.setTimeout(3 * 60 * 1000)
+
+    beforeAll(async () => {
+        const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
+        const client = new MongoClient(mongoUri!)
+        await client.connect()
+        await mongoose.connect(mongoUri!);
+        console.log(" ✅ Connected successfully to mongo db and mongoose");
+    })
+
+    afterAll(async () => {
+        await client.close();
+        await mongoose.disconnect();
+        console.log(" ✅ Closed mongo db and mongoose")
+    })
+
+    it('Like the post ', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const likeNewPost = await updatePostLikeStatus(createAll.newPostId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likeNewPost.status).toBe(204)
+
+        const getNewPost= await getPostById(createAll.newPostId)
+        expect(getNewPost.status).toBe(200)
+
+        const expectedPost = {
+            id: createAll.newPostId,
+            title: createAll.newPostTitle,
+            shortDescription: createAll.newPostShortDescription,
+            content: createAll.newPostContent,
+            blogId: createAll.newBlogId,
+            blogName: createAll.newBlogName,
+            createdAt: createAll.newPostCreatedAt,
+            extendedLikesInfo: {
+                likesCount: 1,
+                dislikesCount: 0,
+                myStatus: LikeStatusesEnum.Like,
+                newestLikes: [
+                    {
+                        addedAt: expect.any(String),
+                        userId: createAll.newCommentUserId,
+                        login: createAll.newCommentUserLogin
+                    }
+                ]
+            }
+        }
+
+        expect(getNewPost.body).toMatchObject(expectedPost)
+
+    })
+})
+
+
+
+
+
 
 describe('Posts', () => {
 
@@ -80,9 +144,10 @@ describe('Posts', () => {
             "title": postTitle,
             "shortDescription": postShortDescription,
             "content": postContent,
-            "blogId": createNewBlog.body.id}
+            "blogId": createNewBlog.body.id
+        }
 
-        const create5Posts = await createSeveralItems(5,'/posts', postFullBody, basicAuth)
+        const create5Posts = await createSeveralItems(5, '/posts', postFullBody, basicAuth)
 
         expect(create5Posts.length).toBe(5)
 
@@ -98,7 +163,7 @@ describe('Posts', () => {
         expect(create5Posts[1]).toMatchObject(expectedPost)
 
         const getAllPostsWithPagination = await getPostsWithPagination("sortBy=createdAt",
-            "sortDirection=asc", "pageNumber=2" , "pageSize=3")
+            "sortDirection=asc", "pageNumber=2", "pageSize=3")
         expect(getAllPostsWithPagination.status).toBe(200)
 
         const expectedPostWithPagination = {
@@ -121,7 +186,7 @@ describe('Posts', () => {
         const createNewPost = await createPost(postTitle, postShortDescription, postContent, createNewBlog.body.id)
         expect(createNewPost.status).toBe(201)
 
-        const updateNewPost = await updatePost (postNewTitle, postNewShortDescription, postNewContent, createNewBlog.body.id, createNewPost.body.id )
+        const updateNewPost = await updatePost(postNewTitle, postNewShortDescription, postNewContent, createNewBlog.body.id, createNewPost.body.id)
         expect(updateNewPost.status).toBe(204)
 
         const getUpdatedPost = await getPostById(createNewPost.body.id)
@@ -143,10 +208,11 @@ describe('Posts', () => {
         expect(deleteUpdatedPost.status).toBe(204)
 
         const getAllPostsWithPagination = await getPostsWithPagination("sortBy=createdAt",
-            "sortDirection=asc", "pageNumber=2" , "pageSize=3")
+            "sortDirection=asc", "pageNumber=2", "pageSize=3")
         expect(getAllPostsWithPagination.status).toBe(200)
 
         expect(getAllPostsWithPagination.body.items.length).toBe(0)
 
     })
 })
+
