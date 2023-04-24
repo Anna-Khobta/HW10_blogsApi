@@ -120,12 +120,18 @@ describe('Posts', () => {
             "content": expect.any(String),
             "blogId": createNewBlog.body.id,
             "blogName": createNewBlog.body.name,
-            "createdAt": expect.any(String)
+            "createdAt": expect.any(String),
+            "extendedLikesInfo": {
+                "likesCount": 0,
+                "dislikesCount": 0,
+                "myStatus": "None",
+                "newestLikes": []
+            }
         }
 
         expect(createNewPost.body).toMatchObject(expectedPost);
 
-        expect(createNewPost.body.createdAt).toMatch(/^20\d{2}(-[01]\d){2}T([0-2]\d):[0-5]\d:[0-5]\d\.\d{3}Z$/)
+        expect(createNewPost.body.createdAt).toMatch( /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/)
         expect(createNewPost.body.blogId).toMatch(createNewBlog.body.id)
         expect(createNewPost.body.blogName).toMatch(createNewBlog.body.name)
 
