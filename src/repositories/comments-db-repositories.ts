@@ -1,41 +1,130 @@
-import {commentsCollection} from "./db";
+import {CommentsModelClass} from "./db/db";
 
-import {CommentDBType} from "./types";
+import {CommentDBType, LikeStatusesEnum, UserLikeInfo} from "./db/types";
+import {HydratedDocument} from "mongoose";
 
 
 export const commentsRepositories = {
 
-    async createComment(newComment: CommentDBType): Promise<CommentDBType> {
-        await commentsCollection.insertOne({...newComment})
-        return newComment
+    async saveComment(commentInstance: HydratedDocument<CommentDBType>): Promise<boolean> {
+        try {
+            await commentInstance.save()
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+
     },
 
+    /* async createComment(newComment: CommentDBType): Promise<CommentDBType> {
+         await CommentsModelClass.insertOne({...newComment})
+         return newComment
+     },*/
 
-    async findCommentById (id: string): Promise <CommentDBType | null> {
-        let foundCommentById = await commentsCollection.findOne({id: id}, {projection: {_id: 0}})
+
+    async findCommentById(id: string): Promise<CommentDBType | null> {
+        let foundCommentById = await CommentsModelClass.findOne({_id: id})
+
         return foundCommentById || null
     },
 
-    async updateComment(id: string, content: string): Promise<boolean | undefined> {
+    async updateComment(id: string, content: string): Promise<string | null> {
 
-        const updatedComment = await commentsCollection.updateOne({id: id},
-            {$set: {content: content }})
+        const commentInstance = await CommentsModelClass.findOne({_id: id})
 
-        return updatedComment.matchedCount === 1
+        if (!commentInstance) {
+            return null
+        }
+
+        commentInstance.content = content;
+
+        try {
+            await commentInstance.save()
+            return commentInstance._id.toString()
+        } catch (error) {
+            console.log(error)
+            return null
+        }
     },
 
     async deleteComment(id: string): Promise<boolean> {
 
-        const result = await commentsCollection.deleteOne({id: id})
-        return result.deletedCount === 1
-        // если 1 сработало. если 0, то нет
+        const result = await CommentsModelClass.findOneAndDelete({_id: id})
+        return result !== null
     },
 
 
-    async deleteAllComments(): Promise<boolean> {
-        const result = await commentsCollection.deleteMany({})
-        return result.acknowledged
-        // если всё удалит, вернет true
+    async deleteAllComments(): Promise<number> {
+        const result = await CommentsModelClass.deleteMany({})
+        return result.deletedCount
+    },
+
+    async updateLikesCountInComment(commentId: string, likes: number, dislikes: number): Promise<boolean> {
+
+        const commentInstance = await CommentsModelClass.findOne({_id: commentId})
+
+        if (!commentInstance) {
+            return false
+        }
+
+        commentInstance.likesCount = likes;
+        commentInstance.dislikesCount = dislikes;
+
+        try {
+            await commentInstance.save()
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
+        }
 
     },
+
+    async addUserLikeInfoInDb(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
+
+        let userLikeInfoToAdd: UserLikeInfo = {
+            userId: userLikeInfo.userId,
+            createdAt: userLikeInfo.createdAt,
+            userStatus: likeStatus
+        }
+
+        const commentInstance = await CommentsModelClass.findOne({_id: commentId})
+
+        if (!commentInstance) {
+            return false
+        }
+
+        commentInstance.usersEngagement.push(userLikeInfoToAdd)
+
+
+        try {
+            await commentInstance.save();
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    },
+
+    async deleteUserInfo(commentId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
+
+        try {
+
+            const commentInstance = await CommentsModelClass.findOne({_id: commentId})
+
+            if (!commentInstance) {
+                return false
+            }
+
+            commentInstance.usersEngagement = commentInstance.usersEngagement.filter(user => user.userId !== userLikeInfo.userId);
+            await commentInstance.save()
+
+            return true
+
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    }
 }

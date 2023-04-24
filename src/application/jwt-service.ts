@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import {TokenDBType} from "../repositories/types";
+import {TokenDBType} from "../repositories/db/types";
 import {settings} from "../settings";
 import {tokenRepositories} from "../repositories/token-db-repositories";
 import { v4 as uuidv4 } from 'uuid';
@@ -8,22 +8,16 @@ import { v4 as uuidv4 } from 'uuid';
 export const jwtService = {
     async createJwtToken(id: string) {
 
-/*
-            userId: id,
-            deviceId: uuidv4()*/
-
-
-        const accessToken = jwt.sign({userId: id}, settings.JWT_SECRET, {expiresIn: '10s'})
-        const refreshToken = jwt.sign({userId: id, deviceId: uuidv4()}, settings.JWT_SECRET, {expiresIn: '20s'})
+        const accessToken = jwt.sign({userId: id}, settings.JWT_SECRET, {expiresIn: '10m'})
+        const refreshToken = jwt.sign({userId: id, deviceId: uuidv4()}, settings.JWT_SECRET, {expiresIn: '20m'})
 
         const decodedRefreshToken = jwt.decode(refreshToken)
 
-        const jwtResult = {
+        return {
             accessToken: accessToken,
             refreshToken: refreshToken,
             decodedRefreshToken: decodedRefreshToken
         }
-        return jwtResult
     },
 
     async getUserIdByToken(tokenFromHead: string) {
@@ -71,12 +65,11 @@ export const jwtService = {
             deviceId: deviceId}, settings.JWT_SECRET, {expiresIn: '20s'})
         const newDecodedRefreshToken = jwt.decode(newRefreshToken)
 
-        const jwtResult = {
+        return {
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
             decodedRefreshToken: newDecodedRefreshToken
         }
-        return jwtResult
     },
 
 

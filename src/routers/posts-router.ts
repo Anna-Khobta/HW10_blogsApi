@@ -8,8 +8,8 @@ import {titleValidation, shortDescriptionValidation, contentValidation, idValida
 import {postsService} from "../domain/posts-service";
 import {getPagination} from "../functions/pagination";
 import {postsQueryRepositories} from "../repositories/posts-query-repositories";
-import {authBearerMiddleware} from "../middlewares/authToken";
-import {contentCommentValidation} from "../middlewares/comments-validation";
+import {authBearerFindUser, authBearerMiddleware} from "../middlewares/authToken";
+import {contentCommentValidation, likeStatusValidation} from "../middlewares/comments-validation";
 import {commentsService} from "../domain/comments-service";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
 
@@ -18,51 +18,52 @@ import {commentsQueryRepositories} from "../repositories/comments-query-reposito
 export const postsRouter = Router({})
 
 
-postsRouter.get('/',
+postsRouter
+
+    .post('/',
+        authorizationMiddleware,
+        idValidation,
+        titleValidation,
+        shortDescriptionValidation,
+        contentValidation,
+        inputValidationMiddleware,
+        async (req: Request, res: Response ) => {
+
+
+            const createdId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId )
+
+            if (!createdId) { return res.sendStatus(404) }
+
+            const postView = await postsQueryRepositories.findPostById(createdId)
+
+            res.status(201).send(postView)
+
+        })
+
+    .get('/',
     async (req: Request, res: Response ) => {
 
        const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
 
-
         let foundPosts = await postsQueryRepositories.findPosts(page, limit, sortDirection, sortBy, skip)
+
         res.status(200).send(foundPosts)
     })
 
 
-postsRouter.get('/:id', async (req: Request, res: Response ) => {
+    .get('/:id', async (req: Request, res: Response ) => {
 
     let findPostID = await postsQueryRepositories.findPostById(req.params.id)
 
-    if (findPostID) {
-        return res.status(200).send(findPostID)
+    if (!findPostID) {
+        return res.status(404)
     } else {
-        return res.sendStatus(404)
+        return res.status(200).send(findPostID)
     }
+
 })
 
-
-postsRouter.post('/',
-    authorizationMiddleware,
-    idValidation,
-    titleValidation,
-    shortDescriptionValidation,
-    contentValidation,
-    inputValidationMiddleware,
-    async (req: Request, res: Response ) => {
-
-
-        const newPostWithoughtID = await postsService.createPost(req.body.title,
-            req.body.shortDescription, req.body.content, req.body.blogId )
-
-        if (newPostWithoughtID) {
-            res.status(201).send(newPostWithoughtID)
-        } else {
-            return res.sendStatus(404)
-        }
-    })
-
-
-postsRouter.put('/:id',
+    .put('/:id',
     authorizationMiddleware,
     idValidation,
     titleValidation,
@@ -71,20 +72,19 @@ postsRouter.put('/:id',
     inputValidationMiddleware,
     async (req: Request, res:Response) => {
 
-    const updatedPosWithoughtID = await postsService.updatePost(req.params.id, req.body.title,
+    const updatedPostId = await postsService.updatePost(req.params.id, req.body.title,
         req.body.shortDescription, req.body.content, req.body.blogId )
 
-        if (updatedPosWithoughtID) {
-            res.sendStatus(204)
+        console.log(updatedPostId)
 
-        } else {
+        if (!updatedPostId) {
             return res.sendStatus(404)
+        } else {
+            return res.sendStatus(204)
         }
     })
 
-
-
-postsRouter.delete('/:id',
+    .delete('/:id',
     authorizationMiddleware,
     async (req: Request, res: Response ) => {
 
@@ -98,7 +98,9 @@ postsRouter.delete('/:id',
     })
 
 
-postsRouter.post('/:postId/comments',
+// POSTS - COMMENTS
+postsRouter
+    .post('/:postId/comments',
         authBearerMiddleware,
         contentCommentValidation,
         inputValidationMiddleware,
@@ -108,27 +110,57 @@ postsRouter.post('/:postId/comments',
 
             const userInfo = req.user
 
-            if (post) {
-                const newComment = await commentsService.createComment(post.id, req.body.content, userInfo!)
-                res.status(201).send(newComment)
-            } else {
-                return res.sendStatus(404)
-            }
+            if (!post) { return res.sendStatus(404) }
+
+            const newComment = await commentsService.createComment(post.id, req.body.content, userInfo!)
+
+            res.status(201).send(newComment)
+
         })
 
-postsRouter.get('/:postId/comments',
-    async (req: Request, res: Response ) => {
+    // return comments for special post
+    .get('/:postId/comments',
+        authBearerFindUser,
+        async (req: Request, res: Response) => {
+            const userInfo = req.user
 
         const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
 
         let post = await postsQueryRepositories.findPostById(req.params.postId)
 
-        if (post) {
+        if (!post) { return res.sendStatus(404) }
+
+        if (!userInfo) {
             const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id, page, limit, sortDirection, sortBy, skip)
             res.status(200).send(foundComments)
         } else {
-            return res.sendStatus(404)
+            const foundCommentsWithUserId = await commentsQueryRepositories.findCommentsForPostWithUser(post.id, page, limit, sortDirection, sortBy, skip, userInfo.id )
+            res.status(200).send(foundCommentsWithUserId)
         }
     })
 
+
+    // Make like/unlike/dislike/undislike operation
+    .put('/:postId/like-status',
+        likeStatusValidation,
+        authBearerMiddleware,
+        inputValidationMiddleware,
+        async (req: Request, res: Response) => {
+
+            const userInfo = req.user // id юзера, который залогинен и хочет лайкнуть
+            const likeStatus = req.body.likeStatus
+
+            const findPostById = await postsQueryRepositories.findPostById(req.params.postId)
+
+            if (!findPostById) {
+                return res.sendStatus(404)
+            }
+
+            const updateLikeStatus = await postsService.createLikeStatus(userInfo, findPostById, req.params.postId, likeStatus)
+
+            if (!updateLikeStatus) {
+                return res.sendStatus(400)
+            } else return res.sendStatus(204)
+
+        })
 

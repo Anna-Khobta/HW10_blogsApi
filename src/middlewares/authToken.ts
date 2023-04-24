@@ -15,32 +15,36 @@ export const authBearerMiddleware = async (req: Request, res: Response, next: Ne
     const userId = await jwtService.getUserIdByToken(tokenFromHead)
 
     if (!userId) {
-        console.log('Oops, something wrong')
-        return res.sendStatus(401) // add return here не ломается?
+        console.log('Oops, something wrong, no userId')
+        return res.send(401) // add return here не ломается?
     }
     const user = await usersService.findUserById(userId.toString())
     if (!user) return res.sendStatus(401)
     req.user = user
     next()
 
-
 }
 
 
-/*
+export const authBearerFindUser = async (req: Request, res: Response, next: NextFunction) => {
 
-    try {
-        if (!tokenFromHead) {
-    return res.sendStatus(401)
-    }
-        const decodedToken = jwt.verify(tokenFromHead, settings.JWT_SECRET)
-        req.user = decodedToken
+    const auth = req.headers.authorization
+
+    if (auth) {
+        const tokenFromHead = auth.split(' ')[1]
+        const userId = await jwtService.getUserIdByToken(tokenFromHead)
+        if (userId) {
+
+            const user = await usersService.findUserById(userId.toString())
+            req.user = user
             next()
 
-    } catch (error) {
-        console.log(error)
-        return res.sendStatus(401)
+        } else {
+            next()
         }
-    })
+    } else {
+        next()
+    }
 
-*/
+
+}

@@ -1,5 +1,5 @@
 import {blogsRepository} from "../repositories/blogs-db-repositories";
-import {BlogType} from "../repositories/types";
+import {BlogType} from "../repositories/db/types";
 
 export const blogsService= {
 
@@ -16,6 +16,7 @@ export const blogsService= {
 
 
         const newBlogWithoughtID: BlogType | null = await blogsRepository.createBlog(newBlog)
+
         return newBlogWithoughtID
 
 
@@ -34,8 +35,7 @@ export const blogsService= {
     },
 
 
-    async deleteAllBlogs(): Promise<boolean> {
-
+    async deleteAllBlogs(): Promise<number> {
         return await blogsRepository.deleteAllBlogs()
 
     }

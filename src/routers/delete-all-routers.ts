@@ -5,6 +5,7 @@ import {postsService} from "../domain/posts-service";
 import {usersService} from "../domain/users-service";
 import {commentsService} from "../domain/comments-service";
 import {tokenService} from "../domain/token-service";
+import {ipDbRepositories} from "../repositories/ip-db-repositories";
 
 export const deleteAllRouter = Router({})
 
@@ -12,29 +13,22 @@ deleteAllRouter.delete('/testing/all-data',
 
     async (req: Request, res: Response ) => {
 
-        const deleteAllBlogs = await blogsService.deleteAllBlogs()
+        try {
+            await blogsService.deleteAllBlogs()
 
-        const deleteAllPosts = await postsService.deleteAllPosts()
+            await postsService.deleteAllPosts()
 
-        const deleteAllUsers = await usersService.deleteAllUsers()
+            await usersService.deleteAllUsers()
 
-        const deleteAllComments = await commentsService.deleteAllComments()
+            await commentsService.deleteAllComments()
 
-        const deleteAllTokens = await tokenService.deleteAllTokens()
+            await tokenService.deleteAllTokens()
 
-        if (deleteAllBlogs) {
-            if (deleteAllPosts) {
-                if (deleteAllUsers) {
-                    if (deleteAllComments) {
-                        if (deleteAllTokens){
-                            res.sendStatus(204)
-                        }
-                    }
-                }
-            }
-        } else {
-            res.sendStatus(404)
+            await ipDbRepositories.deleteALLIps()
+
+            res.sendStatus(204)
+        } catch (error) {
+            console.log(error)
+            return res.sendStatus(404)
         }
     })
-
-

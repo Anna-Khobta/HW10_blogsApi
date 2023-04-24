@@ -1,71 +1,114 @@
-import { usersCollection} from "./db";
-import {SortDirection} from "mongodb";
-import {UserDbType, UserViewWhenAdd} from "./types";
+import {UserModelClass} from "./db/db";
+import {UserDbType} from "./db/types";
+import {HydratedDocument} from "mongoose";
+
+
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(5);
 
 export const usersRepository = {
 
-    async checkUser(login: string, email: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({$or: [{"accountData.login": login}, {"accountData.email": email}]})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
+    async save(userInstance: HydratedDocument<UserDbType>): Promise<boolean> {
+        try {
+            await userInstance.save()
+            return true
+        } catch (error) {
+            console.log(error)
+            return false
         }
+    },
+
+    async deleteUser(id: string): Promise<boolean> {
+        const userInstance = await UserModelClass.findOne({_id: id})
+        if (!userInstance) return false
+
+        await userInstance.deleteOne()
+        return true
 
     },
 
-    async checkUserByEmail(email: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"accountData.email": email})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-    async checkUserByLogin(login: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"accountData.login": login})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
-    },
-
-    async checkUserByCode(code: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne({"emailConfirmation.confirmationCode": code})
-
-        if (foundUser) {
-            return foundUser
-        } else {
-            return null
-        }
-
+    async deleteAllUsers(): Promise<number> {
+        const result = await UserModelClass.deleteMany({})
+        return result.deletedCount
     },
 
 
-    async checkUserLoginOrEmail(loginOrEmail: string): Promise<UserDbType | null> {
+/*    async createUserRegistrashion(newUser: UserDbType): Promise<UserDbType | null> {
 
-        let foundUser = await usersCollection.findOne({$or: [{"accountData.login": loginOrEmail}, {"accountData.email": loginOrEmail}]})
+        await usersCollection.insertOne(newUser)
 
-        if (foundUser) {
-            return foundUser
-        } else {
+        const newUserWithoughtId = await usersCollection.findOne(
+            {id: newUser.id}, {projection: {_id: 0}})
+
+        return newUserWithoughtId
+    },*/
+
+
+
+    async updateConfirmation(userId: string): Promise<string | null> {
+        let userInstance = await UserModelClass.findOne({_id: userId})
+
+        if (!userInstance) { return null}
+
+        userInstance.emailConfirmation.isConfirmed = true;
+
+        try {
+            await userInstance.save()
+            return userInstance._id.toString()
+        } catch (error) {
+            console.log(error)
             return null
         }
+    },
+
+    async updateConfirmationCode(id: string, generateConfirmationCode: string, generateExpirationDate: Date): Promise<boolean> {
+        let userInstance = await UserModelClass.findOne({_id: id})
+
+        if (!userInstance) { return false}
+
+        userInstance.emailConfirmation.confirmationCode = generateConfirmationCode;
+        userInstance.emailConfirmation.expirationDate = generateExpirationDate
+
+        await userInstance.save()
+        return true
 
     },
 
-    async createUser(newUser: UserDbType): Promise<UserViewWhenAdd | null> {
+    async updatePasswordRecoveryCode(id: string, generatePassRecovCode: string, generatePassRecovCodeExpirationDate: Date): Promise<boolean> {
+        let userInstance = await UserModelClass.findOne({_id: id})
+        if (!userInstance) { return false}
+
+        userInstance.passwordRecovery.recoveryCode = generatePassRecovCode;
+        userInstance.passwordRecovery.exp = generatePassRecovCodeExpirationDate;
+
+        await userInstance.save()
+
+        return true
+    },
+
+    async updatePassword (id: string, newPassword: string): Promise<string | null> {
+
+        const hashPassword = await bcrypt.hash(newPassword, salt)
+
+        let userInstance = await UserModelClass.findOne({_id: id})
+        if (!userInstance) { return null}
+        userInstance.accountData.hashPassword = hashPassword;
+        userInstance.passwordRecovery.recoveryCode = null;
+        userInstance.passwordRecovery.exp = null;
+
+        try {
+            await userInstance.save()
+            return userInstance._id.toString()
+        } catch (error) {
+            console.log(error)
+            return null
+        }
+    }
+}
+
+
+
+/*    async createUser(newUser: UserDbType): Promise<UserViewWhenAdd | null> {
 
         const insertNewUserInDb = await usersCollection.insertOne(newUser)
 
@@ -80,114 +123,127 @@ export const usersRepository = {
 
         }
         return returnUserView
-    },
+    }*/
 
-    async findUsers(page: number,
-                    limit: number,
-                    sortDirection: SortDirection,
-                    sortBy: string,
-                    searchLoginTerm: string,
-                    searchEmailTerm: string,
-                    skip: number) {
+/* async findUsers(page: number,
+                 limit: number,
+                 sortDirection: SortDirection,
+                 sortBy: string,
+                 searchLoginTerm: string,
+                 searchEmailTerm: string,
+                 skip: number) {
 
-        const filter = {
-            $or: [{"accountData.login": {$regex: searchLoginTerm, $options: 'i'}},
-                {"accountData.email": {$regex: searchEmailTerm, $options: 'i'}}]
+     const filter = {
+         $or: [{"accountData.login": {$regex: searchLoginTerm, $options: 'i'}},
+             {"accountData.email": {$regex: searchEmailTerm, $options: 'i'}}]
+     }
+
+     const findUsers = await usersCollection.find
+     (filter,
+         {
+             projection: {
+                 _id: 0,
+                 id: 1,
+                 "accountData.login": 1,
+                 "accountData.email": 1,
+                 "accountData.createdAt": 1
+             }
+         })
+         .sort({[sortBy]: sortDirection})
+         .skip(skip)
+         .limit(limit)
+         .toArray()
+
+     const items = findUsers.map(user => ({
+         id: user.id,
+         login: user.accountData.login,
+         email: user.accountData.email,
+         createdAt: user.accountData.createdAt
+     }));
+
+     const total = await usersCollection.countDocuments(filter)
+
+     const pagesCount = Math.ceil(total / limit)
+
+     return {
+         pagesCount: pagesCount,
+         page: page,
+         pageSize: limit,
+         totalCount: total,
+         items: items
+     }
+ },*/
+
+
+
+/*    async checkUserByEmail(email: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"accountData.email": email})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
         }
 
-        const findUsers = await usersCollection.find(
-            filter,
-            {
-                projection: {
-                    _id: 0,
-                    id: 1,
-                    "accountData.login": 1,
-                    "accountData.email": 1,
-                    "accountData.createdAt": 1
-                }
-            })
-            .sort({[sortBy]: sortDirection})
-            .skip(skip)
-            .limit(limit)
-            .toArray()
+        перенесла в квери в универсальную фунцию findUserByLoginOrEmail
 
-        const items = findUsers.map(user => ({
-            id: user.id,
-            login: user.accountData.login,
-            email: user.accountData.email,
-            createdAt: user.accountData.createdAt
-        }));
+    },*/
 
-        const total = await usersCollection.countDocuments(filter)
+/*    async checkUserByLogin(login: string): Promise<UserDbType | null> {
 
-        const pagesCount = Math.ceil(total / limit)
+        let foundUser = await usersCollection.findOne({"accountData.login": login})
 
-        return {
-            pagesCount: pagesCount,
-            page: page,
-            pageSize: limit,
-            totalCount: total,
-            items: items
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
         }
-    },
 
-    async deleteUser(id: string): Promise<boolean> {
-        const result = await usersCollection.deleteOne({id: id})
-        return result.deletedCount === 1
-    },
+    },*/
 
-    async deleteAllUsers(): Promise<boolean> {
-        const result = await usersCollection.deleteMany({})
-        return result.acknowledged
-    },
+/*    async checkUserByCode(code: string): Promise<UserDbType | null> {
 
-    async findUserById(userId: string): Promise<UserDbType | null> {
+        let foundUser = await usersCollection.findOne({"emailConfirmation.confirmationCode": code})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+/*    async findUserByRecoveryCode(recoveryCode: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({"passwordRecovery.recoveryCode": recoveryCode}, {projection: {_id: 0, password: 0,}})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+/*    async checkUserLoginOrEmail(loginOrEmail: string): Promise<UserDbType | null> {
+
+        let foundUser = await usersCollection.findOne({$or: [{"accountData.login": loginOrEmail}, {"accountData.email": loginOrEmail}]})
+
+        if (foundUser) {
+            return foundUser
+        } else {
+            return null
+        }
+
+    },*/
+
+
+/*    async findUserById(userId: string): Promise<UserDbType | null> {
 
         let foundUser = await usersCollection.findOne(
             {id: userId},
             {projection: {_id: 0, password: 0, createdAt: 0}})
 
         return foundUser || null
-    },
-
-    async createUserRegistrashion(newUser: UserDbType): Promise<UserDbType | null> {
-
-        await usersCollection.insertOne(newUser)
-
-        const newUserWithoughtId = await usersCollection.findOne(
-            {id: newUser.id}, {projection: {_id: 0}})
-
-        return newUserWithoughtId
-    },
-
-    async findUserByConfirmationCode(code: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne(
-            {"emailConfirmation.confirmationCode": code},
-            {projection: {_id: 0}})
-
-        return foundUser || null
-    },
-
-    async updateConfirmation (id: string): Promise<boolean> {
-        let result = await usersCollection.updateOne({id: id}, {$set: {"emailConfirmation.isConfirmed": true}})
-        return result.modifiedCount === 1
-    },
-
-    async findUserByEmail(email: string): Promise<UserDbType | null> {
-
-        let foundUser = await usersCollection.findOne(
-            {"accountData.email": email},
-            {projection: {_id: 0}})
-
-        return foundUser || null
-    },
-
-    async updateConfirmationCode (id: string, generateConfirmationCode:string, generateExpirationDate: Date): Promise<boolean> {
-        let result = await usersCollection.updateOne({id: id},
-            {$set: {
-                "emailConfirmation.confirmationCode": generateConfirmationCode,
-                    "emailConfirmation.expirationDate": generateExpirationDate}})
-        return result.modifiedCount === 1
-    }
-}
+    },*/

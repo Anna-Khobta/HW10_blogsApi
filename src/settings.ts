@@ -30,10 +30,12 @@ app.get('/', (req: Request, res: Response ) => {
 })
 
 app.use('/', blogsRouter)
+app.use('/posts', postsRouter)
+
 app.use('/', deleteAllRouter)
 app.use('/users', usersRouter)
 app.use('/auth', authRouter)
-app.use('/posts', postsRouter)
+
 app.use('/comments', commentsRouter)
 app.use('/security', devicesRouter )
 

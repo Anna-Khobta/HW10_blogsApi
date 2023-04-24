@@ -1,5 +1,11 @@
 import {body} from "express-validator";
-import {checkCodeInbase, checkEmailExist, checkEmailInbase, checkLoginExist} from "../functions/checkLoginEmailIsExist";
+import {
+    checkCodeInbase,
+    checkEmailExist,
+    checkEmailInbase,
+    checkLoginExist,
+    checkRecoveryCodeInBase
+} from "../functions/checkLoginEmailIsExist";
 
 export const loginValidation = body("login")
     .trim().not().isEmpty().withMessage("The login is empty")
@@ -10,6 +16,12 @@ export const loginValidation = body("login")
 export const passwordValidation = body("password")
     .trim().not().isEmpty().withMessage("The password is empty")
     .isLength({min:6, max: 20}).withMessage("The length should be minimum 6, maximum 20")
+
+export const newPasswordValidation = body("newPassword")
+    .trim().not().isEmpty().withMessage("The password is empty")
+    .isLength({min:6, max: 20}).withMessage("The length should be minimum 6, maximum 20")
+
+
 
 export const emailValidation = body("email")
     .trim().not().isEmpty().withMessage("The email is empty")
@@ -33,5 +45,8 @@ export const checkUserEmailInbase = body("email")
 
 export const checkCodeInDb= body("code")
     .custom( (value)=> { return checkCodeInbase(value)})
+
+export const checkRecoveryCodeInDb= body("recoveryCode")
+    .custom( (value)=> { return checkRecoveryCodeInBase (value)})
 
 

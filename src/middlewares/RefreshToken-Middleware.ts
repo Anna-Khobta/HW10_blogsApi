@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import {jwtService} from "../application/jwt-service";
-import {TokenDBType} from "../repositories/types";
+import {TokenDBType} from "../repositories/db/types";
 
 export const refreshTokenMiddleware = async (req:Request, res:Response, next: NextFunction) => {
 
@@ -27,5 +27,24 @@ export const refreshTokenMiddleware = async (req:Request, res:Response, next: Ne
 
     req.cookies['refreshToken'] = refreshTokenFromDb
     next()
+}
+
+
+export const checkRefreshToken= async (req:Request, res:Response, next: NextFunction) => {
+
+    const refreshToken = req.cookies['refreshToken']
+
+    console.log(refreshToken)
+
+    if (refreshToken) {
+        const isRefreshTokenValid = await jwtService.checkRefreshTokenIsValid(refreshToken)
+        if (isRefreshTokenValid) {
+            const refreshTokenFromDbWithUserId: TokenDBType | null = await jwtService.getRefreshTokenFromDb(refreshToken)
+            if (refreshTokenFromDbWithUserId) {
+                req.cookies['refreshToken'] = refreshTokenFromDbWithUserId
+                next()
+            } next()
+        } next()
+    } next()
 
 }

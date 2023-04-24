@@ -1,5 +1,5 @@
-import {ipDbType} from "./types";
-import {ipCollection} from "./db";
+import {ipDbType} from "./db/types";
+import {ipCollection} from "./db/db";
 
 
 export const ipDbRepositories = {
@@ -30,5 +30,10 @@ export const ipDbRepositories = {
 
         return foundIpInDb
 
+    },
+
+    async deleteALLIps(): Promise<boolean> {
+        const result = await ipCollection.deleteMany({})
+        return result.acknowledged
     }
 }

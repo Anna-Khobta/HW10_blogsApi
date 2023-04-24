@@ -1,37 +1,32 @@
-import {blogsCollection} from "./db";
-import {BlogType} from "./types";
+import {BlogModelClass} from "./db/db";
+import {BlogType} from "./db/types";
 
 
 export const blogsRepository = {
 
     async createBlog(newBlog: BlogType): Promise<BlogType | null> {
 
-
-        await blogsCollection.insertOne(newBlog)
-
-        return await blogsCollection.findOne({id: newBlog.id},{projection:{_id:0}})
+        await BlogModelClass.create(newBlog)
+        return BlogModelClass.findOne({id: newBlog.id}, {_id: 0, __v: 0}).lean() ;
     },
-
 
     async updateBlog(id: string, name: string, description: string, websiteUrl: string ): Promise<boolean> {
 
-        const result = await blogsCollection.updateOne({id: id}, {$set: {name: name, description:description, websiteUrl:websiteUrl  }})
+        const result = await BlogModelClass.updateOne({id: id}, {$set: {name: name, description:description, websiteUrl:websiteUrl  }})
         return result.matchedCount === 1
 
     },
 
-
     async deleteBlog(id: string): Promise<boolean> {
-        const result = await blogsCollection.deleteOne({id: id})
-        return result.deletedCount === 1
-        // если 1 сработало. если 0, то нет
+        const result = await BlogModelClass.findOneAndDelete({id: id})
+        return result !== null;
+        //  If the deleted document exists, we return true, otherwise, we return false.
     },
 
 
-    async deleteAllBlogs(): Promise<boolean> {
-        const result = await blogsCollection.deleteMany({})
-        return result.acknowledged
-        // если всё удалит, вернет true
+    async deleteAllBlogs(): Promise<number> {
+        const result = await BlogModelClass.deleteMany({})
+        return result.deletedCount
     }
 }
 
