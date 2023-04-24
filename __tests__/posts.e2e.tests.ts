@@ -78,10 +78,6 @@ describe('posts, put like-status', () => {
 })
 
 
-
-
-
-
 describe('Posts', () => {
 
     jest.setTimeout(3 * 60 * 1000)
