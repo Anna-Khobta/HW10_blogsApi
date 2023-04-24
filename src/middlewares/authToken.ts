@@ -30,6 +30,8 @@ export const authBearerFindUser = async (req: Request, res: Response, next: Next
 
     const auth = req.headers.authorization
 
+    //console.log(auth, "auth")
+
     if (auth) {
         const tokenFromHead = auth.split(' ')[1]
         const userId = await jwtService.getUserIdByToken(tokenFromHead)

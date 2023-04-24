@@ -1,4 +1,4 @@
-import {PostModelClass} from "./db/db";
+import {PostModelClass, UserModelClass} from "./db/db";
 import {LikeStatusesEnum, PostsWithPagination, PostViewType} from "./db/types";
 import {SortOrder} from "mongoose";
 
@@ -56,6 +56,84 @@ export const postsQueryRepositories = {
         } catch (error){
             return null
         }
+    },
+
+    async findPostByIdNew(postId: string, userId: string | null): Promise<any | null> {
+
+            const postInstance = await PostModelClass.findOne({_id:postId },{ __v: 0}).lean()
+
+            console.log(postInstance, "postInstance")
+
+            if (!postInstance) {
+                return null
+            }
+
+            let userLikeStatus= LikeStatusesEnum.None
+            if (!userId) {
+                userLikeStatus= LikeStatusesEnum.None
+            } else {
+                let userLikeInfo = postInstance.usersEngagement.find(
+                    (user) => user.userId === userId)
+
+                if (!userLikeInfo) {
+                    userLikeStatus= LikeStatusesEnum.None
+                } else {
+                    userLikeStatus = userLikeInfo.userStatus
+                }
+            }
+
+            console.log(userLikeStatus, "userLikeStatus")
+
+            const postLikes = await PostModelClass.find(
+                { _id: postId, "usersEngagement.userStatus": "Like" },
+                { _id: 0, __v: 0 }
+            )
+                .sort({ "usersEngagement.createdAt": "desc" })
+                .limit(3)
+                .lean();
+
+        const mappedLikes = await Promise.all(postLikes.map(async (like) => {
+
+            const addedAt = like.usersEngagement.find((el) => el.userId === userId)?.createdAt;
+
+            const foundLogins = await UserModelClass.find({_id: userId}, {"accountData.login": 1})
+
+            return {
+                addedAt: addedAt,
+                userId: userId,
+                login: foundLogins[0]?.accountData?.login
+                }
+            }
+        ))
+
+        console.log(mappedLikes, "mappedLikes")
+
+/*
+            "newestLikes": [
+                {
+                    "addedAt": "2023-04-24T18:57:39.708Z",
+                    "userId": "string",
+                    "login": "string"
+                }*/
+
+            const postView = {
+                id: postId,
+                title: postInstance.title,
+                shortDescription: postInstance.shortDescription,
+                content: postInstance.content,
+                blogId: postInstance.blogId,
+                blogName: postInstance.blogName,
+                createdAt: postInstance.createdAt,
+                extendedLikesInfo: {
+                    likesCount: postInstance.likesCount,
+                    dislikesCount: postInstance.dislikesCount,
+                    myStatus: userLikeStatus,
+                    newestLikes: mappedLikes
+                }
+            }
+
+            return postView
+
     },
 
     async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number): Promise<PostsWithPagination> {

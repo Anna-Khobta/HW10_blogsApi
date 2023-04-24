@@ -30,9 +30,26 @@ export type PostViewType = {
     createdAt: string,
     likesCount: number,
     dislikesCount: number,
-    myStatus: LikeStatusesEnum
-
+    myStatus: LikeStatusesEnum,
 }
+
+export type PostViewTypeNew = {
+    id: string,
+    title: string,
+    shortDescription: string,
+    content: string,
+    blogId: string,
+    blogName: string,
+    createdAt: string,
+    extendedLikesInfo: {
+        likesCount: number,
+        dislikesCount: number,
+        myStatus: LikeStatusesEnum,
+        newestLikes: UserLikeInfo[]
+    }
+}
+
+
 
 export type PostTypeWithoutIds = {
     title: string,

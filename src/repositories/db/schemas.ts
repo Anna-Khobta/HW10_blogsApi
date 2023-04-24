@@ -18,6 +18,8 @@ export const postSchema = new mongoose.Schema<PostDbType>( {
     blogId: String,
     blogName: String,
     createdAt: String,
+    likesCount: Number,
+    dislikesCount: Number,
     usersEngagement:
         [{ userId: String,
             createdAt: String,

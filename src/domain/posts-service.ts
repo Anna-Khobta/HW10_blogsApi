@@ -1,5 +1,5 @@
 import {postsRepositories} from "../repositories/posts-db-repositories";
-import {LikeStatusesEnum, PostTypeWithoutIds, PostViewType, UserLikeInfo, UserViewType} from "../repositories/db/types";
+import {LikeStatusesEnum, PostDbType, PostViewType, UserLikeInfo, UserViewType} from "../repositories/db/types";
 import {blogsQueryRepository} from "../repositories/blogs-query-repository";
 import {postsQueryRepositories} from "../repositories/posts-query-repositories";
 import {PostModelClass} from "../repositories/db/db";
@@ -18,13 +18,16 @@ export const postsService = {
             return null
         }
 
-        let newPost: PostTypeWithoutIds = {
+        let newPost: PostDbType = {
             title: title,
             shortDescription: shortDescription,
             content: content,
             blogId: blogId,
             blogName: foundBlogName.name,
             createdAt: (new Date()).toISOString(),
+            likesCount: 0,
+            dislikesCount: 0,
+            usersEngagement: []
         }
 
         const postInstance = new PostModelClass(newPost)
@@ -68,7 +71,6 @@ export const postsService = {
 
     async createLikeStatus(userInfo: UserViewType, foundPost: PostViewType, postId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
-
         const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await postsQueryRepositories.checkUserLike(postId, userInfo.id)
 
         let userLikeInfo: UserLikeInfo = {
@@ -77,58 +79,62 @@ export const postsService = {
             userStatus: checkIfUserHaveAlreadyPutLike || likeStatus
         }
 
-        //если пользователь ранее не лайкал вообще этот пост
-        if (!checkIfUserHaveAlreadyPutLike) {
-            await postsRepositories.createUserLikeInfoInDb(postId, userLikeInfo, likeStatus)
-        }
-
         let likes = foundPost.likesCount
         let dislikes = foundPost.dislikesCount
 
-        if (checkIfUserHaveAlreadyPutLike === likeStatus) return true
+        console.log(checkIfUserHaveAlreadyPutLike)
 
-        if (checkIfUserHaveAlreadyPutLike === "None") {
-            switch (likeStatus) {
-                case "Like":
-                    likes++;
-                    break;
-                case "Dislike":
-                    dislikes++;
-                    break;
-                default:
-                    break;
+        //если пользователь ранее не лайкал вообще этот пост
+        if (!checkIfUserHaveAlreadyPutLike) {
+            return await postsRepositories.createUserLikeInfoInDb(postId, userLikeInfo, likeStatus, likes, dislikes)
+
+        } else {
+
+            if (checkIfUserHaveAlreadyPutLike === likeStatus) return true
+
+            if (checkIfUserHaveAlreadyPutLike === "None") {
+                switch (likeStatus) {
+                    case "Like":
+                        likes++;
+                        break;
+                    case "Dislike":
+                        dislikes++;
+                        break;
+                    default:
+                        break;
+                }
+
             }
 
+
+            if (checkIfUserHaveAlreadyPutLike === "Like") {
+                switch (likeStatus) {
+                    case "Dislike":
+                        likes--;
+                        dislikes++;
+                        break;
+                    default:
+                        likes--;
+                        break;
+                }
+            }
+
+            if (checkIfUserHaveAlreadyPutLike === "Dislike") {
+                switch (likeStatus) {
+                    case "Like":
+                        likes++;
+                        dislikes--;
+                        break;
+                    default:
+                        dislikes--;
+                        break;
+                }
+            }
+
+            return await postsRepositories.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes);
         }
 
 
-        if (checkIfUserHaveAlreadyPutLike === "Like") {
-            switch (likeStatus) {
-                case "Dislike":
-                    likes--;
-                    dislikes++;
-                    break;
-                default:
-                    likes--;
-                    break;
-            }
-        }
-
-        if (checkIfUserHaveAlreadyPutLike === "Dislike") {
-            switch (likeStatus) {
-                case "Like":
-                    likes++;
-                    dislikes--;
-                    break;
-                default:
-                    dislikes--;
-                    break;
-            }
-        }
-
-            const updatePost = await postsRepositories.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes)
-
-            return updatePost;
 
 
     }

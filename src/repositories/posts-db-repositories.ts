@@ -53,7 +53,7 @@ async deleteAllPosts(): Promise<number> {
 },
 
 
-    async createUserLikeInfoInDb(postId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum): Promise<boolean> {
+    async createUserLikeInfoInDb(postId: string, userLikeInfo: UserLikeInfo, likeStatus: LikeStatusesEnum, likes:number, dislikes:number): Promise<boolean> {
 
         let userLikeInfoToAdd: UserLikeInfo = {
             userId: userLikeInfo.userId,
@@ -61,15 +61,29 @@ async deleteAllPosts(): Promise<number> {
             userStatus: likeStatus
         }
 
+
+        if (likeStatus === LikeStatusesEnum.Like) {
+            likes++
+        }
+
+        if (likeStatus === LikeStatusesEnum.Dislike) {
+            dislikes++
+        }
+
         try {
             const postInstance = await PostModelClass.findOne({_id: postId})
 
             if (!postInstance) { return false }
 
+            postInstance.likesCount = likes;
+            postInstance.dislikesCount = dislikes;
             postInstance.usersEngagement.push(userLikeInfoToAdd)
+
             await postInstance.save();
             return true
-        } catch (error) {
+        }
+
+        catch (error) {
             console.log(error)
             return false
         }
@@ -87,26 +101,25 @@ async deleteAllPosts(): Promise<number> {
         try {
             const postInstance = await PostModelClass.findOne({_id: postId, "usersEngagement.userId": userLikeInfo.userId})
 
+            console.log( postInstance, "111111111111")
+
             if (!postInstance) { return false}
-
-
 
             let myStatus = postInstance.usersEngagement.find(el => el.userId === userLikeInfoToAdd.userId)
 
             let foundStatus = myStatus?.userStatus
 
-            // myStatus = likeStatus
             // TODO тут надо доделать апдейт статусов instance method
 
-            //myStatus?.userStatus = userLikeInfoToAdd.userStatus;
-            //postInstance.usersEngagement.userStatus = userLikeInfoToAdd.userStatus;
+            //console.log(likes)
+
             postInstance.likesCount = likes;
             postInstance.dislikesCount = dislikes;
 
             await postInstance.save();
 
-           /* const postInstanceTEST = await PostModelClass.findOne({_id: postId})
-            console.log(postInstanceTEST)*/
+           const postInstanceTEST = await PostModelClass.findOne({_id: postId})
+            console.log(postInstanceTEST)
 
             return true
 

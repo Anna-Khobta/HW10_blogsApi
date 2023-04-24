@@ -3,9 +3,9 @@ import { simpleParser } from 'mailparser';
 import ImapClient from 'emailjs-imap-client';
 
 
-const myPassTest = process.env.EMAIL_TEST
+/*const myPassTest = process.env.EMAIL_TEST
 const myPassYandex = process.env.EMAIL_YANDEX_PAS
-const myPassYandexApp = process.env.EMAIL_YANDEX_PAS_APP
+const myPassYandexApp = process.env.EMAIL_YANDEX_PAS_APP*/
 
 export class MailBoxImap {
     private imap: ImapClient;
@@ -24,7 +24,7 @@ export class MailBoxImap {
     }
 
     private async searchMessagesIdxBySubject(subject: string): Promise<number[]> {
-        console.log('searchMessagesIdxBySubject')
+
         const result = await this.imap.search('INBOX', {
             header: ['subject', `${subject}`],
             since: new Date(),
