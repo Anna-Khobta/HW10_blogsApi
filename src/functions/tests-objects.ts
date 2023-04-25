@@ -24,16 +24,24 @@ export const postNewContent= "AnnaNewPostContent"
 
 
 export const myLogin = "nakanai"
-export const secondLogin = "nakanai1"
 export const myPassword = "nakanai"
-export const newPassword = "newPassword"
 export const myEmail = "nakanai.x@gmail.com"
+
+
+export const secondLogin = "nakanai1"
+export const newPassword = "newPassword"
 export const secondEmail = 'ana14i88@gmail.com'
+
 
 export const thirdLogin = "nakanai3"
 export const thirdPassword = "nakanai3"
 export const thirdEmail = 'khobta.av@gmail.com'
 export const thirdLoginOrEmail = "nakanai3"
+
+export const fourthLogin = "nakanai4"
+export const fourthPassword = "nakanai4"
+export const fourthEmail = 'khontaav@gmail.com'
+export const fourthLoginOrEmail = "nakanai3"
 
 
 

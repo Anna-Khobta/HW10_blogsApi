@@ -1,24 +1,37 @@
 import {client} from "../src/repositories/db/db";
 import {
     clearAllDb,
-    createBlog, createBlogPostUserLoginComment,
-    createPost, createSeveralItems, createUser2, createUser2_3_4, deletePostById,
-    getPostById, getPostByIdWithAuth,
-    getPostsWithPagination, updatePost, updatePostLikeStatus
+    createBlog,
+    createBlogPostUserLoginComment,
+    createPost,
+    createSeveralItems,
+    createUser2_3_4,
+    deletePostById,
+    getPostById,
+    getPostByIdWithAuth,
+    getPostsWithPagination,
+    getPostsWithPaginationWithAuth,
+    updatePost,
+    updatePostLikeStatus
 } from "../src/functions/tests-functions";
 import {
     basicAuth,
     blogDescription,
     blogName,
-    blogUrl, fourthLogin,
-    postContent, postNewContent, postNewShortDescription, postNewTitle,
+    blogUrl,
+    fourthLogin,
+    postContent,
+    postNewContent,
+    postNewShortDescription,
+    postNewTitle,
     postShortDescription,
-    postTitle, secondLogin, thirdLogin
+    postTitle,
+    secondLogin,
+    thirdLogin
 } from "../src/functions/tests-objects";
 import mongoose from "mongoose";
 import {MongoClient} from "mongodb";
 import {LikeStatusesEnum} from "../src/repositories/db/types";
-
 
 
 describe('posts, put like-status', () => {
@@ -234,8 +247,216 @@ describe('posts, put like-status', () => {
             }]
         }
 
-        //expect(getPostWithAuthAfter3.body.extendedLikesInfo.newestLikes.length).toBe(1)
+        expect(getPostWithAuthAfter3.body.extendedLikesInfo.newestLikes.length).toBe(1)
         expect(getPostWithAuthAfter3.body.extendedLikesInfo).toStrictEqual(expectedPost3)
+
+    })
+
+    it(' like the post by user 1; dislike the post by user 1; ' +
+        'set none status by user 1; get the post after each like by user 1', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const likePostByUser1 = await updatePostLikeStatus(createAll.newPostId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likePostByUser1.status).toBe(204)
+
+        const getPostWithAuth = await getPostByIdWithAuth(createAll.newPostId,  createAll.createdUserAccessToken)
+        expect(getPostWithAuth.status).toBe(200)
+
+        const expectedPost = {
+            likesCount: 1,
+            dislikesCount: 0,
+            myStatus: LikeStatusesEnum.Like,
+            newestLikes: [{
+                addedAt: expect.any(String),
+                userId: createAll.newUserId,
+                login: createAll.newUserLogin
+            }]
+        }
+
+        expect(getPostWithAuth.body.extendedLikesInfo.newestLikes.length).toBe(1)
+        expect(getPostWithAuth.body.extendedLikesInfo).toMatchObject(expectedPost)
+
+        const dislikePostByUser1 = await updatePostLikeStatus(createAll.newPostId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Dislike)
+        expect(dislikePostByUser1.status).toBe(204)
+
+        const getPostWithAuth2 = await getPostByIdWithAuth(createAll.newPostId,  createAll.createdUserAccessToken)
+        expect(getPostWithAuth2.status).toBe(200)
+
+        const expectedPost2 = {
+            likesCount: 0,
+            dislikesCount: 1,
+            myStatus: LikeStatusesEnum.Dislike,
+            newestLikes: []
+        }
+
+        expect(getPostWithAuth2.body.extendedLikesInfo.newestLikes.length).toBe(0)
+        expect(getPostWithAuth2.body.extendedLikesInfo).toMatchObject(expectedPost2)
+
+        const setNoneOnPostByUser1 = await updatePostLikeStatus(createAll.newPostId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.None)
+        expect(setNoneOnPostByUser1.status).toBe(204)
+
+        const getPostWithAuth3 = await getPostByIdWithAuth(createAll.newPostId,  createAll.createdUserAccessToken)
+        expect(getPostWithAuth3.status).toBe(200)
+
+        const expectedPost3 = {
+            likesCount: 0,
+            dislikesCount: 0,
+            myStatus: LikeStatusesEnum.None,
+            newestLikes: []
+        }
+
+        expect(getPostWithAuth3.body.extendedLikesInfo.newestLikes.length).toBe(0)
+        expect(getPostWithAuth3.body.extendedLikesInfo).toMatchObject(expectedPost3)
+
+
+    })
+
+    it('Create 6 posts, Like the post1, get all posts with pagiation', async () => {
+
+        const createAll = await createBlogPostUserLoginComment()
+
+        const url = "/posts"
+        const body = {
+            "title": "title",
+            "shortDescription": "shortDescription",
+            "content": "content",
+            "blogId": createAll.newBlogId
+        }
+        const create6Posts = await createSeveralItems(5, url, body, basicAuth)
+        expect(create6Posts.length).toBe(5)
+
+        const createdUsers2_3_4= await createUser2_3_4()
+
+        const likePost1ByUser1 = await updatePostLikeStatus(createAll.newPostId,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likePost1ByUser1.status).toBe(204)
+
+        const likePost1ByUser2 = await updatePostLikeStatus(createAll.newPostId,
+            createdUsers2_3_4.createdUser2AccessToken, LikeStatusesEnum.Like)
+        expect(likePost1ByUser2.status).toBe(204)
+
+        const getPost1WithAuthAfter = await getPostsWithPaginationWithAuth(null,
+            null, null, null, createAll.createdUserAccessToken)
+        expect(getPost1WithAuthAfter.status).toBe(200)
+        expect(getPost1WithAuthAfter.body.items.length).toBe(6)
+
+        const expectedPostLikeInfo = {
+            likesCount: 2,
+            dislikesCount: 0,
+            myStatus: LikeStatusesEnum.Like,
+            newestLikes: [{
+                addedAt: expect.any(String),
+                userId: createdUsers2_3_4.user2Id,
+                login: secondLogin
+            },
+                {
+                    addedAt: expect.any(String),
+                    userId: createAll.newUserId,
+                    login: createAll.newUserLogin
+                }]
+        }
+
+        expect(getPost1WithAuthAfter.body.items[5].extendedLikesInfo).toStrictEqual(expectedPostLikeInfo)
+
+        //like post 2 by user 2, user 3
+        const likePost2ByUser2 = await updatePostLikeStatus(create6Posts[0].id,
+            createdUsers2_3_4.createdUser2AccessToken, LikeStatusesEnum.Like)
+        expect(likePost2ByUser2.status).toBe(204)
+
+        const likePost2ByUser3 = await updatePostLikeStatus(create6Posts[0].id,
+            createdUsers2_3_4.createdUser3AccessToken, LikeStatusesEnum.Like)
+        expect(likePost2ByUser3.status).toBe(204)
+
+        const getPost1WithAuthAfter2 = await getPostsWithPaginationWithAuth(null,
+            null, null, null, createAll.createdUserAccessToken)
+        expect(getPost1WithAuthAfter2.status).toBe(200)
+
+        const expectedPost2LikeInfo = {
+            likesCount: 2,
+            dislikesCount: 0,
+            myStatus: LikeStatusesEnum.None,
+            newestLikes: [{
+                addedAt: expect.any(String),
+                userId: createdUsers2_3_4.user3Id,
+                login: thirdLogin
+            },
+                {
+                    addedAt: expect.any(String),
+                    userId: createdUsers2_3_4.user2Id,
+                    login: secondLogin
+                }]
+        }
+
+        expect(getPost1WithAuthAfter2.body.items[5].extendedLikesInfo).toStrictEqual(expectedPostLikeInfo)
+        expect(getPost1WithAuthAfter2.body.items[4].extendedLikesInfo).toStrictEqual(expectedPost2LikeInfo)
+
+        // dislike post 3 by user 1; like post 4 by user 1, user 4, user 2, user 3;
+
+        const dislikePost3ByUser1 = await updatePostLikeStatus(create6Posts[1].id,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Dislike)
+        expect(dislikePost3ByUser1.status).toBe(204)
+
+
+
+        const likePost4ByUser1 = await updatePostLikeStatus(create6Posts[3].id,
+            createAll.createdUserAccessToken, LikeStatusesEnum.Like)
+        expect(likePost4ByUser1.status).toBe(204)
+
+        const likePost4ByUser4 = await updatePostLikeStatus(create6Posts[3].id,
+            createdUsers2_3_4.createdUser4AccessToken, LikeStatusesEnum.Like)
+        expect(likePost4ByUser4.status).toBe(204)
+
+        const likePost4ByUser2 = await updatePostLikeStatus(create6Posts[3].id,
+            createdUsers2_3_4.createdUser2AccessToken, LikeStatusesEnum.Like)
+        expect(likePost4ByUser2.status).toBe(204)
+
+        const likePost4ByUser3 = await updatePostLikeStatus(create6Posts[3].id,
+            createdUsers2_3_4.createdUser3AccessToken, LikeStatusesEnum.Like)
+        expect(likePost4ByUser3.status).toBe(204)
+
+        const expectedPost3LikeInfo = {
+            likesCount: 0,
+            dislikesCount: 1,
+            myStatus: LikeStatusesEnum.Dislike,
+            newestLikes: []
+        }
+
+        const expectedPost4LikeInfo = {
+            likesCount: 4,
+            dislikesCount: 0,
+            myStatus: LikeStatusesEnum.Like,
+            newestLikes: [
+                {
+                addedAt: expect.any(String),
+                userId: createdUsers2_3_4.user3Id,
+                login: thirdLogin
+                },
+                {
+                    addedAt: expect.any(String),
+                    userId: createdUsers2_3_4.user2Id,
+                    login: secondLogin
+                },
+                {
+                    addedAt: expect.any(String),
+                    userId: createdUsers2_3_4.user4Id,
+                    login: fourthLogin
+                }
+                ]
+        }
+
+        const getPost1WithAuthAfter3 = await getPostsWithPaginationWithAuth(null,
+            null, null, null, createAll.createdUserAccessToken)
+        expect(getPost1WithAuthAfter3.status).toBe(200)
+
+        expect(getPost1WithAuthAfter3.body.items[5].extendedLikesInfo).toStrictEqual(expectedPostLikeInfo)
+        expect(getPost1WithAuthAfter3.body.items[4].extendedLikesInfo).toStrictEqual(expectedPost2LikeInfo)
+        expect(getPost1WithAuthAfter3.body.items[3].extendedLikesInfo).toStrictEqual(expectedPost3LikeInfo)
+        expect(getPost1WithAuthAfter3.body.items[1].extendedLikesInfo).toStrictEqual(expectedPost4LikeInfo)
+
 
     })
 
