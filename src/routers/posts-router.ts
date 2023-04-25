@@ -32,13 +32,13 @@ postsRouter
         async (req: Request, res: Response) => {
 
 
-            const createdId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId)
+            const createdPostId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId)
 
-            if (!createdId) {
-                return res.sendStatus(404)
+            if (!createdPostId) {
+                return res.status(404)
             }
 
-            const postView = await postsQueryRepositories.findPostById(createdId)
+            const postView = await postsQueryRepositories.findPostById(createdPostId)
 
             res.status(201).send(postView)
 
@@ -61,20 +61,22 @@ postsRouter
 
             let userInfo = req.user
 
-            console.log(userInfo)
+            if (!userInfo) {
+                const findPostWithoutUserInfo = await postsQueryRepositories.findPostWithoutUser(req.params.id)
 
-            if (!userInfo) {userInfo = null }
+                if (!findPostWithoutUserInfo) {
+                    return res.status(404) }
 
-            console.log(userInfo)
+                return res.status(200).send(findPostWithoutUserInfo)
+            }
 
-            console.log(req.params.id)
 
-            let findPostID = await postsQueryRepositories.findPostByIdNew(req.params.id, userInfo.id)
+            let findPostWithAuth= await postsQueryRepositories.findPostByIdNew(req.params.id, userInfo.id)
 
-            if (!findPostID) {
+            if (!findPostWithAuth) {
                 return res.status(404)
             } else {
-                return  res.status(200).send(findPostID)
+                return  res.status(200).send(findPostWithAuth)
             }
 
 

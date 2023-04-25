@@ -12,7 +12,6 @@ export const postsService = {
 
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-        // TODO по идее надо квери вынести в роутер и сюда просто передать имя блога
 
         if (!foundBlogName) {
             return null
@@ -73,14 +72,16 @@ export const postsService = {
 
         const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await postsQueryRepositories.checkUserLike(postId, userInfo.id)
 
+        //console.log(checkIfUserHaveAlreadyPutLike, "checkIfUserHaveAlreadyPutLike")
+
         let userLikeInfo: UserLikeInfo = {
             userId: userInfo.id,
             createdAt: (new Date()).toISOString(),
             userStatus: checkIfUserHaveAlreadyPutLike || likeStatus
         }
 
-        let likes = foundPost.likesCount
-        let dislikes = foundPost.dislikesCount
+        let likes = foundPost.extendedLikesInfo.likesCount
+        let dislikes = foundPost.extendedLikesInfo.dislikesCount
 
         console.log(checkIfUserHaveAlreadyPutLike)
 

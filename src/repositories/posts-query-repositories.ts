@@ -1,6 +1,7 @@
 import {PostModelClass, UserModelClass} from "./db/db";
-import {LikeStatusesEnum, PostsWithPagination, PostViewType} from "./db/types";
+import {LikeStatusesEnum, NewestLikesType, PostsWithPagination, PostViewType} from "./db/types";
 import {SortOrder} from "mongoose";
+
 
 
 export const postsQueryRepositories = {
@@ -15,7 +16,7 @@ export const postsQueryRepositories = {
             .sort({sortBy: sortDirection})
             .lean()
 
-        console.log(findPosts)
+        //console.log(findPosts)
 
         const total = await PostModelClass.countDocuments()
         const pagesCount = Math.ceil(total / limit)
@@ -47,97 +48,180 @@ export const postsQueryRepositories = {
                 blogId: post.blogId,
                 blogName: post.blogName,
                 createdAt: post.createdAt,
-                likesCount: post.likesCount,
-                dislikesCount: post.dislikesCount,
-                myStatus: LikeStatusesEnum.None
+                extendedLikesInfo: {
+                    likesCount: post.likesCount,
+                    dislikesCount: post.dislikesCount,
+                    myStatus: LikeStatusesEnum.None,
+                    newestLikes: post.usersEngagement
+                }
             }
 
             return postView
-        } catch (error){
+        } catch (error) {
             return null
         }
     },
 
-    async findPostByIdNew(postId: string, userId: string | null): Promise<any | null> {
+    async findPostByIdNew(postId: string, userId: string): Promise<any | null> {
 
-            const postInstance = await PostModelClass.findOne({_id:postId },{ __v: 0}).lean()
+        const postInstance = await PostModelClass.findById({_id: postId},{__v: 0})
 
-            console.log(postInstance, "postInstance")
+        if (!postInstance) {
+            return null
+        }
 
-            if (!postInstance) {
-                return null
-            }
+        let myStatus
 
-            let userLikeStatus= LikeStatusesEnum.None
-            if (!userId) {
-                userLikeStatus= LikeStatusesEnum.None
+        const userLikeInfo = postInstance.usersEngagement.find(
+                (user) => user.userId === userId);
+
+            if (!userLikeInfo) {
+                myStatus = LikeStatusesEnum.None;
             } else {
-                let userLikeInfo = postInstance.usersEngagement.find(
-                    (user) => user.userId === userId)
-
-                if (!userLikeInfo) {
-                    userLikeStatus= LikeStatusesEnum.None
-                } else {
-                    userLikeStatus = userLikeInfo.userStatus
-                }
+                myStatus = userLikeInfo.userStatus
             }
 
-            console.log(userLikeStatus, "userLikeStatus")
 
-            const postLikes = await PostModelClass.find(
-                { _id: postId, "usersEngagement.userStatus": "Like" },
-                { _id: 0, __v: 0 }
-            )
-                .sort({ "usersEngagement.createdAt": "desc" })
-                .limit(3)
-                .lean();
 
-        const mappedLikes = await Promise.all(postLikes.map(async (like) => {
+        const postWithLikes = await PostModelClass.find(
+            {_id: postId, "usersEngagement.userStatus": LikeStatusesEnum.Like},
+            {_id: 0, __v: 0}
+        )
+            .sort({"usersEngagement.createdAt": "desc"})
+            .lean();
 
-            const addedAt = like.usersEngagement.find((el) => el.userId === userId)?.createdAt;
+        console.log(postWithLikes, "postWithLikes __ with user ")
 
-            const foundLogins = await UserModelClass.find({_id: userId}, {"accountData.login": 1})
 
-            return {
-                addedAt: addedAt,
-                userId: userId,
-                login: foundLogins[0]?.accountData?.login
-                }
+        let mappedLikes: NewestLikesType[] = []
+
+        if (postWithLikes.length > 0) {
+            if (postWithLikes[0].usersEngagement.length > 0) {
+
+                const filteredLikes = postWithLikes[0].usersEngagement.filter(user => user.userStatus === 'Like')
+                const last3Likes = filteredLikes.slice(-3)
+                const reverse = last3Likes.reverse()
+
+                console.log(reverse, "userLikeForMap  __ with user  ")
+
+                mappedLikes = await Promise.all(reverse.map(async element => {
+
+                    const foundLogins = await UserModelClass.find({_id: element.userId}, {"accountData.login": 1})
+
+                    return {
+                        addedAt: element.createdAt,
+                        userId: element.userId,
+                        login: foundLogins[0]?.accountData?.login
+                    }
+
+                }))
+
+                //console.log(mappedLikes, "mappedLikes")
             }
-        ))
+        }
 
-        console.log(mappedLikes, "mappedLikes")
 
-/*
-            "newestLikes": [
-                {
-                    "addedAt": "2023-04-24T18:57:39.708Z",
-                    "userId": "string",
-                    "login": "string"
-                }*/
 
-            const postView = {
-                id: postId,
-                title: postInstance.title,
-                shortDescription: postInstance.shortDescription,
-                content: postInstance.content,
-                blogId: postInstance.blogId,
-                blogName: postInstance.blogName,
-                createdAt: postInstance.createdAt,
-                extendedLikesInfo: {
-                    likesCount: postInstance.likesCount,
-                    dislikesCount: postInstance.dislikesCount,
-                    myStatus: userLikeStatus,
-                    newestLikes: mappedLikes
-                }
+        // если у нас нет userID
+        //TODO mmm
+
+
+
+
+
+        const postView = {
+            id: postId,
+            title: postInstance.title,
+            shortDescription: postInstance.shortDescription,
+            content: postInstance.content,
+            blogId: postInstance.blogId,
+            blogName: postInstance.blogName,
+            createdAt: postInstance.createdAt,
+            extendedLikesInfo: {
+                likesCount: postInstance.likesCount,
+                dislikesCount: postInstance.dislikesCount,
+                myStatus: myStatus,
+                newestLikes: mappedLikes
             }
+        }
 
-            return postView
+        return postView
+
+    },
+    async findPostWithoutUser(postId: string): Promise<any | null> {
+
+        const postInstance = await PostModelClass.findById({_id: postId},{__v: 0})
+
+        if (!postId) {
+            return null
+        }
+
+        if (!postInstance) { return null }
+
+        const postWithLikes = await PostModelClass.find(
+            {_id: postId, "usersEngagement.userStatus": "Like"},
+            {_id: 0, __v: 0}
+        )
+            .sort({"usersEngagement.createdAt": "desc"})
+            .limit(3)
+            .lean();
+
+        console.log(postWithLikes, "postWithLikes1 _ findPostWithoutUser")
+
+        let mappedLikes: NewestLikesType[] = []
+
+        if (postWithLikes.length > 0) {
+            if (postWithLikes[0].usersEngagement.length > 0) {
+
+                const filteredLikes = postWithLikes[0].usersEngagement.filter(user => user.userStatus === 'Like')
+                const last3Likes = filteredLikes.slice(-3)
+                const reverse = last3Likes.reverse()
+
+                    console.log(reverse, "last3Likes __without user ")
+
+                mappedLikes = await Promise.all(reverse.map(async element => {
+
+                    const foundLogins = await UserModelClass.find({_id: element.userId}, {"accountData.login": 1})
+
+                    return {
+                        addedAt: element.createdAt.toString(),
+                        userId: element.userId,
+                        login: foundLogins[0]?.accountData?.login
+                    }
+                }))
+            }
+        }
+
+        console.log(mappedLikes, "mappedLikes _ without user id")
+
+
+        const postView = {
+            id: postId,
+            title: postInstance.title,
+            shortDescription: postInstance.shortDescription,
+            content: postInstance.content,
+            blogId: postInstance.blogId,
+            blogName: postInstance.blogName,
+            createdAt: postInstance.createdAt,
+            extendedLikesInfo: {
+                likesCount: postInstance.likesCount,
+                dislikesCount: postInstance.dislikesCount,
+                myStatus: LikeStatusesEnum.None,
+                newestLikes: mappedLikes
+            }
+        }
+
+        return postView
 
     },
 
-    async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number): Promise<PostsWithPagination> {
-        let findPosts: PostViewType[] = await PostModelClass.find(
+
+
+    async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number):
+        Promise<PostsWithPagination> {
+        let findPosts
+            :
+            PostViewType[] = await PostModelClass.find(
             {blogId: blogId},
             {projection: {_id: 0}})
             .skip(skip)
@@ -157,7 +241,8 @@ export const postsQueryRepositories = {
         }
     },
 
-    async checkUserLike (postId: string, userId: string): Promise<LikeStatusesEnum | null> {
+    async checkUserLike(postId: string, userId: string):
+        Promise<LikeStatusesEnum | null> {
 
         try {
 
@@ -165,19 +250,23 @@ export const postsQueryRepositories = {
 
             //console.log(postInstance)
 
-            if (!postInstance) {return null}
+            if (!postInstance
+            ) {
+                return null
+            }
 
             const userLikeInfo = postInstance.usersEngagement.find(
                 (user) => user.userId === userId
             );
 
-            //console.log(userLikeInfo, 'userLikeInfo')
+//console.log(userLikeInfo, 'userLikeInfo')
 
             if (!userLikeInfo) {
                 return null;
             }
             return userLikeInfo.userStatus
-        } catch (error) {
+        } catch
+            (error) {
             console.log(error);
             return null;
         }
