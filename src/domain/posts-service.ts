@@ -50,7 +50,6 @@ export const postsService = {
 
         const updatedPostId = await postsRepositories.updatePost(postId, title, shortDescription, content)
 
-        console.log(updatedPostId)
 
         if (!updatedPostId) {
             return null
@@ -72,7 +71,7 @@ export const postsService = {
 
         const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await postsQueryRepositories.checkUserLike(postId, userInfo.id)
 
-        //console.log(checkIfUserHaveAlreadyPutLike, "checkIfUserHaveAlreadyPutLike")
+        console.log(checkIfUserHaveAlreadyPutLike, "checkIfUserHaveAlreadyPutLike")
 
         let userLikeInfo: UserLikeInfo = {
             userId: userInfo.id,
@@ -83,7 +82,6 @@ export const postsService = {
         let likes = foundPost.extendedLikesInfo.likesCount
         let dislikes = foundPost.extendedLikesInfo.dislikesCount
 
-        console.log(checkIfUserHaveAlreadyPutLike)
 
         //если пользователь ранее не лайкал вообще этот пост
         if (!checkIfUserHaveAlreadyPutLike) {

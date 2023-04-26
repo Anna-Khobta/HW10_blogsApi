@@ -28,9 +28,12 @@ export type PostViewType = {
     blogId: string,
     blogName: string,
     createdAt: string,
-    likesCount: number,
-    dislikesCount: number,
-    myStatus: LikeStatusesEnum,
+    extendedLikesInfo: {
+        likesCount: number,
+        dislikesCount: number,
+        myStatus: LikeStatusesEnum,
+        newestLikes: NewestLikesType[]
+    }
 }
 
 export type PostViewTypeNew = {
@@ -101,6 +104,12 @@ export type UserLikeInfo = {
     userId: string,
     createdAt: string,
     userStatus: LikeStatusesEnum
+}
+
+export type NewestLikesType = {
+    addedAt: string,
+    userId: string,
+    login: string
 }
 
 

@@ -16,11 +16,12 @@ export const commentsQueryRepositories = {
             {__v: 0})
             .skip(skip)
             .limit(limit)
-            .sort({sortBy: sortDirection})
+            .sort({[sortBy]: sortDirection})
             .lean()
 
 
         const mappedComments = findComments.map(comment => {
+
             return {
                 id: comment._id.toString(),
                 content: comment.content,

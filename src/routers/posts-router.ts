@@ -45,6 +45,24 @@ postsRouter
         })
 
     .get('/',
+        authBearerFindUser,
+        async (req: Request, res: Response) => {
+            const userInfo = req.user
+
+
+            const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
+
+            if (!userInfo) {
+                const foundPostsWithoutUser = await postsQueryRepositories.findPosts(null, page, limit, sortDirection, sortBy, skip)
+                res.status(200).send(foundPostsWithoutUser)
+
+            } else {
+                const foundPostsWithUser = await postsQueryRepositories.findPostsWithUser(null, page, limit, sortDirection, sortBy, skip, userInfo.id)
+                res.status(200).send(foundPostsWithUser)
+            }
+        })
+
+/*
         async (req: Request, res: Response) => {
 
             const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
@@ -52,7 +70,7 @@ postsRouter
             let foundPosts = await postsQueryRepositories.findPosts(page, limit, sortDirection, sortBy, skip)
 
             res.status(200).send(foundPosts)
-        })
+        })*/
 
 
     .get('/:id',
@@ -149,7 +167,7 @@ postsRouter
 
         })
 
-    // return comments for special post
+    // return all comments for special post
     .get('/:postId/comments',
         authBearerFindUser,
         async (req: Request, res: Response) => {

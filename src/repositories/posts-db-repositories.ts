@@ -101,25 +101,19 @@ async deleteAllPosts(): Promise<number> {
         try {
             const postInstance = await PostModelClass.findOne({_id: postId, "usersEngagement.userId": userLikeInfo.userId})
 
-            console.log( postInstance, "111111111111")
+
 
             if (!postInstance) { return false}
 
-            let myStatus = postInstance.usersEngagement.find(el => el.userId === userLikeInfoToAdd.userId)
-
-            let foundStatus = myStatus?.userStatus
-
-            // TODO тут надо доделать апдейт статусов instance method
-
-            //console.log(likes)
-
+            postInstance.usersEngagement.find(el => el.userId === userLikeInfoToAdd.userId)!.userStatus = likeStatus
             postInstance.likesCount = likes;
             postInstance.dislikesCount = dislikes;
 
+
             await postInstance.save();
 
-           const postInstanceTEST = await PostModelClass.findOne({_id: postId})
-            console.log(postInstanceTEST)
+           /*const postInstanceTEST = await PostModelClass.findOne({_id: postId})
+            console.log(postInstanceTEST)*/
 
             return true
 

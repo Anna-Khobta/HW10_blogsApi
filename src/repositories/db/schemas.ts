@@ -70,9 +70,16 @@ export const commentSchema = new Schema ({
             }}]
 
 
-}
-);
+},
+    { statics: {
+            findByName(name) {
+                return this.find({ name: new RegExp(name, 'i') });
+            }
+        }
+    });
 
+
+/*
 
 commentSchema.statics.getCommentUserStatus = async function(commentId: string, userId: string) {
     const comment = await this.findById(commentId)
@@ -85,3 +92,4 @@ commentSchema.statics.getCommentUserStatus = async function(commentId: string, u
     return userStatus ? userStatus.userStatus : LikeStatusesEnum.None
 }
 
+*/
