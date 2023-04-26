@@ -11,9 +11,6 @@ export const last3UsersLikes = async (postId: string) => {
         .sort({"usersEngagement.createdAt": "desc"})
         .lean();
 
-    console.log(postWithLikes, "postWithLikes __ UPPER  ")
-
-
     let mappedLikes: NewestLikesType[] = []
 
     if (postWithLikes.length > 0) {
@@ -22,8 +19,6 @@ export const last3UsersLikes = async (postId: string) => {
             const filteredLikes = postWithLikes[0].usersEngagement.filter(user => user.userStatus === 'Like')
             const last3Likes = filteredLikes.slice(-3)
             const reverse = last3Likes.reverse()
-
-            //console.log(reverse, "userLikeForMap  __ with user  ")
 
             mappedLikes = await Promise.all(reverse.map(async element => {
 
@@ -34,11 +29,9 @@ export const last3UsersLikes = async (postId: string) => {
                     userId: element.userId,
                     login: foundLogins[0]?.accountData?.login
                 }
-
             }))
         }
         return mappedLikes
-
     } else {
         return mappedLikes
     }
@@ -98,7 +91,6 @@ export const postsQueryRepositories = {
 
     async findPostsWithUser(blogId: string|null, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number, userId: string): Promise<PostsWithPagination> {
 
-
         let filter: any = {}
 
         if (blogId) {
@@ -112,8 +104,6 @@ export const postsQueryRepositories = {
             .limit(limit)
             .sort({[sortBy]: sortDirection})
             .lean()
-
-        //console.log(foundPosts, "foundPosts")
 
         const mappedPosts = await Promise.all(foundPosts.map(async post => {
 
@@ -137,9 +127,6 @@ export const postsQueryRepositories = {
                 }
             }
         }))
-
-
-        console.log(mappedPosts, "mappedPosts")
 
         const total = await PostModelClass.countDocuments(filter)
         const pagesCount = Math.ceil(total / limit)
@@ -187,7 +174,7 @@ export const postsQueryRepositories = {
         }
     },
 
-    async findPostByIdNew(postId: string, userId: string): Promise<any | null> {
+    async findPostByIdWithUser(postId: string, userId: string): Promise<any | null> {
 
         const postInstance = await PostModelClass.findById({_id: postId}, {__v: 0})
 
@@ -206,45 +193,7 @@ export const postsQueryRepositories = {
             myStatus = userLikeInfo.userStatus
         }
 
-
-        const postWithLikes = await PostModelClass.find(
-            {_id: postId, "usersEngagement.userStatus": LikeStatusesEnum.Like},
-            {_id: 0, __v: 0}
-        )
-            .sort({"usersEngagement.createdAt": "desc"})
-            .lean();
-
-        //console.log(postWithLikes, "postWithLikes __ with user ")
-
-
-        let mappedLikes: NewestLikesType[] = []
-
-        if (postWithLikes.length > 0) {
-            if (postWithLikes[0].usersEngagement.length > 0) {
-
-                const filteredLikes = postWithLikes[0].usersEngagement.filter(user => user.userStatus === 'Like')
-                const last3Likes = filteredLikes.slice(-3)
-                const reverse = last3Likes.reverse()
-
-                //console.log(reverse, "userLikeForMap  __ with user  ")
-
-                mappedLikes = await Promise.all(reverse.map(async element => {
-
-                    const foundLogins = await UserModelClass.find({_id: element.userId}, {"accountData.login": 1})
-
-                    return {
-                        addedAt: element.createdAt,
-                        userId: element.userId,
-                        login: foundLogins[0]?.accountData?.login
-                    }
-
-                }))
-            }
-        }
-
-
-        // если у нас нет userID
-        //TODO mmm
+        const likers = await last3UsersLikes(postInstance._id.toString())
 
         const postView = {
             id: postId,
@@ -258,14 +207,14 @@ export const postsQueryRepositories = {
                 likesCount: postInstance.likesCount,
                 dislikesCount: postInstance.dislikesCount,
                 myStatus: myStatus,
-                newestLikes: mappedLikes
+                newestLikes: likers
             }
         }
 
         return postView
 
     },
-    async findPostWithoutUser(postId: string): Promise<any | null> {
+    async findPostByIdWithoutUser(postId: string): Promise<any | null> {
 
         const postInstance = await PostModelClass.findById({_id: postId}, {__v: 0})
 
@@ -277,42 +226,7 @@ export const postsQueryRepositories = {
             return null
         }
 
-        const postWithLikes = await PostModelClass.find(
-            {_id: postId, "usersEngagement.userStatus": "Like"},
-            {_id: 0, __v: 0}
-        )
-            .sort({"usersEngagement.createdAt": "desc"})
-            .limit(3)
-            .lean();
-
-        // console.log(postWithLikes, "postWithLikes1 _ findPostWithoutUser")
-
-        let mappedLikes: NewestLikesType[] = []
-
-        if (postWithLikes.length > 0) {
-            if (postWithLikes[0].usersEngagement.length > 0) {
-
-                const filteredLikes = postWithLikes[0].usersEngagement.filter(user => user.userStatus === 'Like')
-                const last3Likes = filteredLikes.slice(-3)
-                const reverse = last3Likes.reverse()
-
-                // console.log(reverse, "last3Likes __without user ")
-
-                mappedLikes = await Promise.all(reverse.map(async element => {
-
-                    const foundLogins = await UserModelClass.find({_id: element.userId}, {"accountData.login": 1})
-
-                    return {
-                        addedAt: element.createdAt.toString(),
-                        userId: element.userId,
-                        login: foundLogins[0]?.accountData?.login
-                    }
-                }))
-            }
-        }
-
-        //  console.log(mappedLikes, "mappedLikes _ without user id")
-
+        const likers = await last3UsersLikes(postId)
 
         const postView = {
             id: postId,
@@ -326,37 +240,12 @@ export const postsQueryRepositories = {
                 likesCount: postInstance.likesCount,
                 dislikesCount: postInstance.dislikesCount,
                 myStatus: LikeStatusesEnum.None,
-                newestLikes: mappedLikes
+                newestLikes: likers
             }
         }
 
         return postView
 
-    },
-
-
-    async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number):
-        Promise<PostsWithPagination> {
-
-        let findPosts:
-            PostViewType[] = await PostModelClass.find(
-            {blogId: blogId},
-            {projection: {_id: 0}})
-            .skip(skip)
-            .limit(limit)
-            .sort({sortBy: sortDirection})
-            .lean()
-
-        const total = await PostModelClass.countDocuments({blogId: blogId})
-        const pagesCount = Math.ceil(total / limit)
-
-        return {
-            pagesCount: pagesCount,
-            page: page,
-            pageSize: limit,
-            totalCount: total,
-            items: findPosts
-        }
     },
 
     async checkUserLike(postId: string, userId: string):
@@ -390,3 +279,29 @@ export const postsQueryRepositories = {
         }
     }
 }
+
+/*
+
+async findPostsByBlogId(blogId: string, page: number, limit: number, sortDirection: SortOrder, sortBy: string, skip: number):
+Promise<PostsWithPagination> {
+
+    let findPosts:
+PostViewType[] = await PostModelClass.find(
+    {blogId: blogId},
+    {projection: {_id: 0}})
+    .skip(skip)
+    .limit(limit)
+    .sort({sortBy: sortDirection})
+    .lean()
+
+const total = await PostModelClass.countDocuments({blogId: blogId})
+const pagesCount = Math.ceil(total / limit)
+
+return {
+    pagesCount: pagesCount,
+    page: page,
+    pageSize: limit,
+    totalCount: total,
+    items: findPosts
+}
+},*/

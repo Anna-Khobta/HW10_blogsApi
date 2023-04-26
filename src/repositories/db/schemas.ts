@@ -10,26 +10,6 @@ export const blogSchema = new mongoose.Schema({
     isMembership: Boolean
 });
 
-export const postSchema = new mongoose.Schema<PostDbType>( {
-    //id: String,
-    title: String,
-    shortDescription: String,
-    content: String,
-    blogId: String,
-    blogName: String,
-    createdAt: String,
-    likesCount: Number,
-    dislikesCount: Number,
-    usersEngagement:
-        [{ userId: String,
-            createdAt: String,
-            userStatus: {
-                type: String,
-                enum: Object.values(LikeStatusesEnum),
-                default: LikeStatusesEnum.None
-            }}]
-})
-
 export const userSchema = new mongoose.Schema<UserDbType>({
     //id: string,
     accountData: {
@@ -68,19 +48,42 @@ export const commentSchema = new Schema ({
                 enum: Object.values(LikeStatusesEnum),
                 default: LikeStatusesEnum.None
             }}]
+    });
 
 
-},
-    { statics: {
+export type PostDBMethodsType = {
+
+}
+
+export const postSchema = new mongoose.Schema<PostDbType>( {
+    //id: String,
+    title: String,
+    shortDescription: String,
+    content: String,
+    blogId: String,
+    blogName: String,
+    createdAt: String,
+    likesCount: Number,
+    dislikesCount: Number,
+    usersEngagement:
+        [{ userId: String,
+            createdAt: String,
+            userStatus: {
+                type: String,
+                enum: Object.values(LikeStatusesEnum),
+                default: LikeStatusesEnum.None
+            }}]
+})
+
+
+
+/*
+{ statics: {
             findByName(name) {
                 return this.find({ name: new RegExp(name, 'i') });
             }
         }
     });
-
-
-/*
-
 commentSchema.statics.getCommentUserStatus = async function(commentId: string, userId: string) {
     const comment = await this.findById(commentId)
     if (!comment) {

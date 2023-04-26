@@ -18,7 +18,6 @@ export const postsRepositories = {
 
     async updatePost(postId: string, title: string, shortDescription: string, content: string): Promise<string | null> {
 
-
         /*        const result = await PostModelClass.updateOne({_id: postId}, {$set: {title: title, shortDescription:shortDescription, content:content  }})
                 return result.matchedCount === 1*/
 

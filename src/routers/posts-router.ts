@@ -31,7 +31,6 @@ postsRouter
         inputValidationMiddleware,
         async (req: Request, res: Response) => {
 
-
             const createdPostId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId)
 
             if (!createdPostId) {
@@ -62,16 +61,6 @@ postsRouter
             }
         })
 
-/*
-        async (req: Request, res: Response) => {
-
-            const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
-
-            let foundPosts = await postsQueryRepositories.findPosts(page, limit, sortDirection, sortBy, skip)
-
-            res.status(200).send(foundPosts)
-        })*/
-
 
     .get('/:id',
         authBearerFindUser,
@@ -80,34 +69,22 @@ postsRouter
             let userInfo = req.user
 
             if (!userInfo) {
-                const findPostWithoutUserInfo = await postsQueryRepositories.findPostWithoutUser(req.params.id)
+                const findPostWithoutUserInfo = await postsQueryRepositories.findPostByIdWithoutUser(req.params.id)
 
                 if (!findPostWithoutUserInfo) {
-                    return res.status(404) }
+                    return res.status(404)
+                }
 
                 return res.status(200).send(findPostWithoutUserInfo)
             }
 
-
-            let findPostWithAuth= await postsQueryRepositories.findPostByIdNew(req.params.id, userInfo.id)
+            let findPostWithAuth = await postsQueryRepositories.findPostByIdWithUser(req.params.id, userInfo.id)
 
             if (!findPostWithAuth) {
                 return res.status(404)
             } else {
-                return  res.status(200).send(findPostWithAuth)
+                return res.status(200).send(findPostWithAuth)
             }
-
-
-
- /*           if (!userInfo) {
-                const foundComments = await commentsQueryRepositories.findCommentsForPost(post.id)
-                res.status(200).send(foundComments)
-
-            } else {
-                const foundCommentsWithUserId = await commentsQueryRepositories.findCommentsForPostWithUser(post.id, page, limit, sortDirection, sortBy, skip, userInfo.id)
-                res.status(200).send(foundCommentsWithUserId)
-            }
-*/
 
         })
 
@@ -145,8 +122,7 @@ postsRouter
         })
 
 
-// POSTS - COMMENTS
-postsRouter
+    // POSTS - COMMENTS
     .post('/:postId/comments',
         authBearerMiddleware,
         contentCommentValidation,

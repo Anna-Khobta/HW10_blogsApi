@@ -85,9 +85,6 @@ blogsRouter
             }
         })
 
-
-    // Returns all posts for specified blog
-
     //create new post for special blog
     .post('/blogs/:blogId/posts',
         authorizationMiddleware,
@@ -131,23 +128,13 @@ blogsRouter
                 const foundPostsWithoutUser = await postsQueryRepositories.findPosts(blogId, page, limit, sortDirection, sortBy, skip)
                 res.status(200).send(foundPostsWithoutUser)
 
-                /*const foundPostsForBlogWithoutUser = await postsQueryRepositories.findPostsByBlogId(blogId, page, limit, sortDirection, sortBy, skip)
-                return res.sendStatus(200).send(foundPostsForBlogWithoutUser)*/
-
             } else {
 
                 const foundPostsWithUser = await postsQueryRepositories.findPostsWithUser(blogId, page, limit, sortDirection, sortBy, skip, userInfo.id)
                 res.status(200).send(foundPostsWithUser)
 
-                //const foundPostsForBlogWithUser = await postsQueryRepositories.findPostsByBlogIdWithUser(blogId, page, limit, sortDirection, sortBy, skip, userInfo.id)
             }
 
         })
-                   /* await postsQueryRepositories.findPosts(page, limit, sortDirection, sortBy, skip)
-                res.status(200).send(foundPostsForBlogWithoutUser)
-
-
-            let postsForBlog = await postsQueryRepositories.findPostsByBlogId(blogId, page, limit, sortDirection, sortBy, skip)
-                return res.sendStatus(200).send(postsForBlog)*/
 
 

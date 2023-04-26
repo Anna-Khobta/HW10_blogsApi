@@ -4,26 +4,26 @@ import {SortOrder} from "mongoose";
 
 
 export const blogsQueryRepository = {
-    async findBlogs(page:number, limit:number, sortDirection: SortOrder, sortBy: string, searchNameTerm:string, skip:number):
+    async findBlogs(page: number, limit: number, sortDirection: SortOrder, sortBy: string, searchNameTerm: string, skip: number):
         Promise<BlogsWithPagination> {
 
-    let findBlogs: BlogType[]  = await BlogModelClass.find(
-        { name: { $regex: searchNameTerm, $options: 'i' }},
-        {projection: {_id: 0}})
-        .skip(skip)
-        .limit(limit)
-        .sort({ sortBy: sortDirection })
-        .lean()
+        let findBlogs: BlogType[] = await BlogModelClass.find(
+            {name: {$regex: searchNameTerm, $options: 'i'}},
+            {projection: {_id: 0}})
+            .skip(skip)
+            .limit(limit)
+            .sort({sortBy: sortDirection})
+            .lean()
 
-     const total = await BlogModelClass.countDocuments({ name: { $regex: searchNameTerm, $options: 'i' }})
-     const pagesCount = Math.ceil(total/ limit)
-    return {
-        pagesCount: pagesCount,
-        page: page,
-        pageSize: limit,
-        totalCount: total,
-        items: findBlogs
-    }
+        const total = await BlogModelClass.countDocuments({name: {$regex: searchNameTerm, $options: 'i'}})
+        const pagesCount = Math.ceil(total / limit)
+        return {
+            pagesCount: pagesCount,
+            page: page,
+            pageSize: limit,
+            totalCount: total,
+            items: findBlogs
+        }
     },
 
 
@@ -38,9 +38,9 @@ export const blogsQueryRepository = {
     },
 
 
-    async findBlogByblogId (blogId: string): Promise<BlogType | null> {
+    async findBlogByblogId(blogId: string): Promise<BlogType | null> {
 
-        const result: BlogType | null  = await BlogModelClass.findOne({id:blogId}, {projection: {_id: 0}}).lean()
+        const result: BlogType | null = await BlogModelClass.findOne({id: blogId}, {projection: {_id: 0}}).lean()
 
         if (result) {
             return result
@@ -49,7 +49,7 @@ export const blogsQueryRepository = {
         }
     },
 
-    async findBlogName(blogId: string): Promise <BlogType | null> {
+    async findBlogName(blogId: string): Promise<BlogType | null> {
 
         let foundBlogName: BlogType | null = await BlogModelClass.findOne({id: blogId}, {_id: 0}).lean()
         return foundBlogName || null

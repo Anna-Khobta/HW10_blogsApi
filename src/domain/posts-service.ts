@@ -12,7 +12,6 @@ export const postsService = {
 
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-
         if (!foundBlogName) {
             return null
         }
@@ -41,15 +40,11 @@ export const postsService = {
         let foundPostId = await postsQueryRepositories.findPostById(postId)
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-        if (!foundPostId) {
-            return null
-        }
-        if (!foundBlogName) {
+        if (!foundPostId || !foundBlogName) {
             return null
         }
 
         const updatedPostId = await postsRepositories.updatePost(postId, title, shortDescription, content)
-
 
         if (!updatedPostId) {
             return null
@@ -70,8 +65,6 @@ export const postsService = {
     async createLikeStatus(userInfo: UserViewType, foundPost: PostViewType, postId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
         const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await postsQueryRepositories.checkUserLike(postId, userInfo.id)
-
-        console.log(checkIfUserHaveAlreadyPutLike, "checkIfUserHaveAlreadyPutLike")
 
         let userLikeInfo: UserLikeInfo = {
             userId: userInfo.id,
@@ -132,9 +125,5 @@ export const postsService = {
 
             return await postsRepositories.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes);
         }
-
-
-
-
     }
 }
