@@ -58,6 +58,15 @@ export const getBlogsWithPagination = async (sortBy:string|null,
         .get('/blogs/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
 }
 
+export const getPostsForBlogWithPagination = async (blogId: string,
+                                                    sortBy:string|null,
+                                             sortDirection: string|null,
+                                             pageNumber: string|null,
+                                             pageSize: string|null) => {
+
+    return request(app)
+        .get('/blogs/' + blogId + "/posts/" +'?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+}
 
 
 // 🌺🌺🌺 POSTS
