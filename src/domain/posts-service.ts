@@ -5,34 +5,24 @@ import {postsQueryRepositories} from "../repositories/posts-query-repositories";
 import {PostModelClass} from "../repositories/db/db";
 
 
-export const postsService = {
-
+class PostsService {
     async createPost(title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
 
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
+
         if (!foundBlogName) {
             return null
         }
 
-        let newPost: PostDbType = {
-            title: title,
-            shortDescription: shortDescription,
-            content: content,
-            blogId: blogId,
-            blogName: foundBlogName.name,
-            createdAt: (new Date()).toISOString(),
-            likesCount: 0,
-            dislikesCount: 0,
-            usersEngagement: []
-        }
+        let newPost = new PostDbType (title, shortDescription, content, blogId, foundBlogName.name)
 
         const postInstance = new PostModelClass(newPost)
         await postsRepositories.save(postInstance)
 
         return postInstance._id.toString()
-    },
+    }
 
     async updatePost(postId: string, title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
@@ -51,16 +41,16 @@ export const postsService = {
         }
 
         return updatedPostId
-    },
+    }
 
     async deletePost(id: string): Promise<boolean> {
         return postsRepositories.deletePost(id)
-    },
+    }
 
     async deleteAllPosts(): Promise<number> {
         return postsRepositories.deleteAllPosts()
 
-    },
+    }
 
     async createLikeStatus(userInfo: UserViewType, foundPost: PostViewType, postId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
@@ -127,3 +117,6 @@ export const postsService = {
         }
     }
 }
+
+
+export const postsService = new PostsService()
