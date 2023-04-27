@@ -51,12 +51,8 @@ export const commentSchema = new Schema ({
     });
 
 
-export type PostDBMethodsType = {
-
-}
-
 export const postSchema = new mongoose.Schema<PostDbType>( {
-    //id: String,
+    //_id: ObjectId,
     title: String,
     shortDescription: String,
     content: String,
@@ -76,6 +72,15 @@ export const postSchema = new mongoose.Schema<PostDbType>( {
 })
 
 
+/*
+postSchema.methods.updatePost = function(title: string, shortDescription:string, content: string) {
+                this.title = title;
+                this.shortDescription = shortDescription;
+                this.content = content;
+
+                return this
+            }
+*/
 
 /*
 { statics: {
