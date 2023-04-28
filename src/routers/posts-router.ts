@@ -1,22 +1,20 @@
-import {Request, Response, Router} from "express";
+import {Router} from "express";
 import {authorizationMiddleware} from "../middlewares/authorization";
 import {inputValidationMiddleware} from "../middlewares/input-validation-middleware";
 
 import {
-    titleValidation,
-    shortDescriptionValidation,
     contentValidation,
-    idValidation
+    idValidation,
+    shortDescriptionValidation,
+    titleValidation
 } from "../middlewares/posts-validations";
-
-import {postsService} from "../domain/posts-service";
-import {getPagination} from "../functions/pagination";
-import {postsQueryRepositories} from "../repositories/posts-query-repositories";
 import {authBearerFindUser, authBearerMiddleware} from "../middlewares/authToken";
 import {contentCommentValidation, likeStatusValidation} from "../middlewares/comments-validation";
-import {commentsService} from "../domain/comments-service";
-import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
+import {container} from "../composition-root";
+import {PostsController} from "./posts-controller";
 
+
+const postsController = container.resolve(PostsController)
 
 export const postsRouter = Router({})
 
@@ -27,17 +25,73 @@ postsRouter
         titleValidation,
         shortDescriptionValidation,
         contentValidation,
+        inputValidationMiddleware, postsController.createPost.bind(postsController))
+
+    .get('/',
+        authBearerFindUser, postsController.getPost.bind(postsController))
+
+
+    .get('/:id',
+        authBearerFindUser,
+        postsController.getPostById.bind(postsController))
+
+
+    .put('/:id',
+        authorizationMiddleware,
+        idValidation,
+        titleValidation,
+        shortDescriptionValidation,
+        contentValidation,
         inputValidationMiddleware,
-        async (req: Request, res: Response) => {
+        postsController.updatePost.bind(postsController))
 
-            const createdPostId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId)
+    .delete('/:id',
+        authorizationMiddleware,
+        postsController.deletePostById.bind(postsController))
 
-            if (!createdPostId) {
-                return res.status(404)
-            }
-            const postView = await postsQueryRepositories.findPostById(createdPostId)
-            res.status(201).send(postView)
-        })
+
+    // POSTS - COMMENTS
+    .post('/:postId/comments',
+        authBearerMiddleware,
+        contentCommentValidation,
+        inputValidationMiddleware,
+        postsController.createCommentForPost.bind(postsController))
+
+    // return all comments for special post
+    .get('/:postId/comments',
+        authBearerFindUser,
+        postsController.getCommentsForPost.bind(postsController))
+
+
+    // Make like/unlike/dislike/undislike operation
+    .put('/:postId/like-status',
+        likeStatusValidation,
+        authBearerMiddleware,
+        inputValidationMiddleware,
+        postsController.updateCommentForPost.bind(postsController))
+
+
+
+/*
+postsRouter
+    .post('/',
+        authorizationMiddleware,
+        idValidation,
+        titleValidation,
+        shortDescriptionValidation,
+        contentValidation,
+        inputValidationMiddleware, postsControllerInstance.createPost.bind(postsControllerInstance))
+
+    /!*async (req: Request, res: Response) => {
+
+        const createdPostId = await postsService.createPost(req.body.title, req.body.shortDescription, req.body.content, req.body.blogId)
+
+        if (!createdPostId) {
+            return res.status(404)
+        }
+        const postView = await postsQueryRepositories.findPostById(createdPostId)
+        res.status(201).send(postView)
+    })*!/
 
     .get('/',
         authBearerFindUser,
@@ -182,3 +236,4 @@ postsRouter
 
         })
 
+*/

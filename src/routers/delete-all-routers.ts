@@ -1,11 +1,11 @@
 import {Request, Response, Router} from "express";
 
 import {blogsService} from "../domain/blogs-service";
-import {postsService} from "../domain/posts-service";
 import {usersService} from "../domain/users-service";
 import {commentsService} from "../domain/comments-service";
 import {tokenService} from "../domain/token-service";
 import {ipDbRepositories} from "../repositories/ip-db-repositories";
+import {postsService} from "../composition-root";
 
 export const deleteAllRouter = Router({})
 

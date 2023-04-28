@@ -10,10 +10,10 @@ import {blogsService} from "../domain/blogs-service";
 export const blogsRouter = Router({})
 
 import {getPagination} from "../functions/pagination";
-import {postsQueryRepositories} from "../repositories/posts-query-repositories";
+
 import {contentValidation, shortDescriptionValidation, titleValidation} from "../middlewares/posts-validations";
-import {postsService} from "../domain/posts-service";
 import {authBearerFindUser} from "../middlewares/authToken";
+import {postQueryRepository, postsService} from "../composition-root";
 
 
 blogsRouter
@@ -100,7 +100,7 @@ blogsRouter
                 return res.sendStatus(404)
             }
 
-            const postView = await postsQueryRepositories.findPostById(createdPostId)
+            const postView = await postQueryRepository.findPostById(createdPostId)
 
             res.status(201).send(postView)
 
@@ -125,12 +125,12 @@ blogsRouter
 
             if (!userInfo) {
 
-                const foundPostsWithoutUser = await postsQueryRepositories.findPosts(blogId, page, limit, sortDirection, sortBy, skip)
+                const foundPostsWithoutUser = await postQueryRepository.findPosts(blogId, page, limit, sortDirection, sortBy, skip)
                 res.status(200).send(foundPostsWithoutUser)
 
             } else {
 
-                const foundPostsWithUser = await postsQueryRepositories.findPostsWithUser(blogId, page, limit, sortDirection, sortBy, skip, userInfo.id)
+                const foundPostsWithUser = await postQueryRepository.findPostsWithUser(blogId, page, limit, sortDirection, sortBy, skip, userInfo.id)
                 res.status(200).send(foundPostsWithUser)
 
             }

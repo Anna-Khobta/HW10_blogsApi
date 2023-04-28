@@ -1,16 +1,19 @@
-import {postsRepositories} from "../repositories/posts-db-repositories";
+import {PostsDbRepository} from "../repositories/posts-db-repository";
 import {LikeStatusesEnum, PostDbType, PostViewType, UserLikeInfo, UserViewType} from "../repositories/db/types";
 import {blogsQueryRepository} from "../repositories/blogs-query-repository";
-import {postsQueryRepositories} from "../repositories/posts-query-repositories";
+import {PostsQueryRepository} from "../repositories/posts-query-repository";
 import {PostModelClass} from "../repositories/db/db";
+import {injectable} from "inversify";
 
+@injectable()
+export class PostsService {
+    constructor(protected postQueryRepository: PostsQueryRepository,
+                protected postsDbRepository: PostsDbRepository) {}
 
-class PostsService {
     async createPost(title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
 
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
-
 
         if (!foundBlogName) {
             return null
@@ -19,7 +22,7 @@ class PostsService {
         let newPost = new PostDbType (title, shortDescription, content, blogId, foundBlogName.name)
 
         const postInstance = new PostModelClass(newPost)
-        await postsRepositories.save(postInstance)
+        await this.postsDbRepository.save(postInstance)
 
         return postInstance._id.toString()
     }
@@ -27,14 +30,14 @@ class PostsService {
     async updatePost(postId: string, title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
 
-        let foundPostId = await postsQueryRepositories.findPostById(postId)
+        let foundPostId = await this.postQueryRepository.findPostById(postId)
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
         if (!foundPostId || !foundBlogName) {
             return null
         }
 
-        const updatedPostId = await postsRepositories.updatePost(postId, title, shortDescription, content)
+        const updatedPostId = await this.postsDbRepository.updatePost(postId, title, shortDescription, content)
 
         if (!updatedPostId) {
             return null
@@ -44,17 +47,17 @@ class PostsService {
     }
 
     async deletePost(id: string): Promise<boolean> {
-        return postsRepositories.deletePost(id)
+        return this.postsDbRepository.deletePost(id)
     }
 
     async deleteAllPosts(): Promise<number> {
-        return postsRepositories.deleteAllPosts()
+        return this.postsDbRepository.deleteAllPosts()
 
     }
 
     async createLikeStatus(userInfo: UserViewType, foundPost: PostViewType, postId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
-        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await postsQueryRepositories.checkUserLike(postId, userInfo.id)
+        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await this.postQueryRepository.checkUserLike(postId, userInfo.id)
 
         let userLikeInfo: UserLikeInfo = {
             userId: userInfo.id,
@@ -65,10 +68,9 @@ class PostsService {
         let likes = foundPost.extendedLikesInfo.likesCount
         let dislikes = foundPost.extendedLikesInfo.dislikesCount
 
-
         //если пользователь ранее не лайкал вообще этот пост
         if (!checkIfUserHaveAlreadyPutLike) {
-            return await postsRepositories.createUserLikeInfoInDb(postId, userLikeInfo, likeStatus, likes, dislikes)
+            return await this.postsDbRepository.createUserLikeInfoInDb(postId, userLikeInfo, likeStatus, likes, dislikes)
 
         } else {
 
@@ -87,7 +89,6 @@ class PostsService {
                 }
 
             }
-
 
             if (checkIfUserHaveAlreadyPutLike === "Like") {
                 switch (likeStatus) {
@@ -113,10 +114,10 @@ class PostsService {
                 }
             }
 
-            return await postsRepositories.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes);
+            return await this.postsDbRepository.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes);
         }
     }
 }
 
 
-export const postsService = new PostsService()
+//export const postsService = new PostsService()

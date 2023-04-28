@@ -2,10 +2,11 @@ import {PostModelClass} from "./db/db";
 import {LikeStatusesEnum, PostsWithPagination, PostViewType} from "./db/types";
 import {SortOrder} from "mongoose";
 import {last3UsersLikes} from "../functions/found3LastLikedUsers";
+import {injectable} from "inversify";
 
 
-class PostsQueryRepositories {
-
+@injectable()
+export class PostsQueryRepository {
     async findPosts(blogId: string|null,page: number,
                     limit: number, sortDirection: SortOrder,
                     sortBy: string, skip: number): Promise<PostsWithPagination> {
@@ -254,6 +255,3 @@ class PostsQueryRepositories {
         }
     }
 }
-
-
-export const postsQueryRepositories = new PostsQueryRepositories()

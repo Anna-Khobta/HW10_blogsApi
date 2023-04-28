@@ -50,6 +50,7 @@ describe('posts, put like-status', () => {
         await client.close();
         await mongoose.disconnect();
         console.log(" ✅ Closed mongo db and mongoose")
+
     })
 
     it('Like the post, get post with and without auth token ', async () => {
@@ -502,9 +503,12 @@ describe('Posts', () => {
 
     jest.setTimeout(3 * 60 * 1000)
 
+    const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
+    const client = new MongoClient(mongoUri!)
+
     beforeAll(async () => {
-        const mongoUri = "mongodb://127.0.0.1:27017" // process.env.MONGO_URL ||
-        const client = new MongoClient(mongoUri!)
+
+
         await client.connect()
         await mongoose.connect(mongoUri!);
         console.log(" ✅ Connected successfully to mongo db and mongoose");
@@ -514,6 +518,11 @@ describe('Posts', () => {
         await client.close();
         await mongoose.disconnect();
         console.log(" ✅ Closed mongo db and mongoose")
+
+    })
+
+    beforeEach(async () => {
+        await clearAllDb()
     })
 
 
