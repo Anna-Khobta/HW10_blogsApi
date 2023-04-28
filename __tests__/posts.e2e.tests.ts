@@ -516,10 +516,6 @@ describe('Posts', () => {
         console.log(" ✅ Closed mongo db and mongoose")
     })
 
-    beforeEach(async () => {
-        await clearAllDb()
-    })
-
 
     it('Create post, status 201; Get/postById status 200', async () => {
 

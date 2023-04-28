@@ -18,12 +18,11 @@ export const postsRepositories = {
 
     async updatePost(postId: string, title: string, shortDescription: string, content: string): Promise<string | null> {
 
-        /*        const result = await PostModelClass.updateOne({_id: postId}, {$set: {title: title, shortDescription:shortDescription, content:content  }})
-                return result.matchedCount === 1*/
-
         const postInstance = await PostModelClass.findOne({_id: postId})
 
         if (!postInstance) { return null}
+
+        //postInstance.updatePost()
 
         postInstance.title = title;
         postInstance.shortDescription = shortDescription;
@@ -59,7 +58,6 @@ async deleteAllPosts(): Promise<number> {
             createdAt: userLikeInfo.createdAt,
             userStatus: likeStatus
         }
-
 
         if (likeStatus === LikeStatusesEnum.Like) {
             likes++

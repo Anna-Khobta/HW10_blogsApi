@@ -20,7 +20,6 @@ import {commentsQueryRepositories} from "../repositories/comments-query-reposito
 
 export const postsRouter = Router({})
 
-
 postsRouter
     .post('/',
         authorizationMiddleware,
@@ -36,18 +35,14 @@ postsRouter
             if (!createdPostId) {
                 return res.status(404)
             }
-
             const postView = await postsQueryRepositories.findPostById(createdPostId)
-
             res.status(201).send(postView)
-
         })
 
     .get('/',
         authBearerFindUser,
         async (req: Request, res: Response) => {
             const userInfo = req.user
-
 
             const {page, limit, sortDirection, sortBy, skip} = getPagination(req.query)
 
@@ -74,7 +69,6 @@ postsRouter
                 if (!findPostWithoutUserInfo) {
                     return res.status(404)
                 }
-
                 return res.status(200).send(findPostWithoutUserInfo)
             }
 
@@ -85,7 +79,6 @@ postsRouter
             } else {
                 return res.status(200).send(findPostWithAuth)
             }
-
         })
 
     .put('/:id',
@@ -99,7 +92,6 @@ postsRouter
 
             const updatedPostId = await postsService.updatePost(req.params.id, req.body.title,
                 req.body.shortDescription, req.body.content, req.body.blogId)
-
 
             if (!updatedPostId) {
                 return res.sendStatus(404)
@@ -138,7 +130,6 @@ postsRouter
             }
 
             const newComment = await commentsService.createComment(post.id, req.body.content, userInfo!)
-
             res.status(201).send(newComment)
 
         })
