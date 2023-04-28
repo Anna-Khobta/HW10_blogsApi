@@ -7,6 +7,9 @@ import {
     blogNameDescriptionUrl,
     blogUrl,
     commentContent,
+    fourthEmail,
+    fourthLogin,
+    fourthPassword,
     loginOrEmailPassw,
     myEmail,
     myLogin,
@@ -16,12 +19,15 @@ import {
     postContent,
     postShortDescription,
     postTitle,
-    secondCommentContent, secondEmail,
-    secondLogin
+    secondCommentContent,
+    secondEmail,
+    secondLogin,
+    thirdEmail,
+    thirdLogin,
+    thirdPassword
 } from "./tests-objects";
 import {app} from "../settings";
 import {LikeStatusesEnum} from "../repositories/db/types";
-
 
 
 // 🌺🌺🌺 BLOGS
@@ -52,6 +58,15 @@ export const getBlogsWithPagination = async (sortBy:string|null,
         .get('/blogs/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
 }
 
+export const getPostsForBlogWithPagination = async (blogId: string,
+                                                    sortBy:string|null,
+                                             sortDirection: string|null,
+                                             pageNumber: string|null,
+                                             pageSize: string|null) => {
+
+    return request(app)
+        .get('/blogs/' + blogId + "/posts/" +'?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
+}
 
 
 // 🌺🌺🌺 POSTS
@@ -69,9 +84,9 @@ export const createPost = async (title: string, shortDescription: string, conten
         })
 }
 
-export const getPostById = async (id:string|null) => {
+export const getPostById = async (postId:string|null) => {
     return request(app)
-        .get('/posts/' + id)
+        .get('/posts/' + postId)
 }
 
 export const getPostByIdWithAuth = async (postId: string, userAccessToken: string) => {
@@ -90,6 +105,19 @@ export const getPostsWithPagination = async (sortBy:string|null,
     return request(app)
         .get('/posts/' + '?'+ sortBy + '&'+sortDirection +'&'+ pageNumber + '&'+ pageSize)
 }
+
+
+export const getPostsWithPaginationWithAuth = async (sortBy:string|null,
+                                             sortDirection: string|null,
+                                             pageNumber: string|null,
+                                             pageSize: string|null,
+                                                     userAccessToken: string) => {
+
+    return request(app)
+        .get('/posts/' + '?' + sortBy + '&' + sortDirection + '&' + pageNumber + '&' + pageSize)
+        .auth(userAccessToken, {type: 'bearer'})
+}
+
 
 export const updatePost = async (title: string, shortDescription: string, content: string, blogId:string, postId: string ) => {
 
@@ -452,8 +480,20 @@ type testCreateAll = {
     newPostContent:string,
     newPostCreatedAt:string,
     newBlogId:string,
-    newBlogName:string
+    newBlogName:string,
+    newUserId: string,
+    newUserLogin:string
 
+}
+
+type test2_3_4UsersTokensAndId = {
+    createdUser2AccessToken:string,
+    createdUser3AccessToken:string,
+    createdUser4AccessToken:string,
+
+    user2Id:string,
+    user3Id:string,
+    user4Id:string,
 }
 
 
@@ -497,9 +537,49 @@ export const createBlogPostUserLoginComment = async (): Promise<testCreateAll> =
     const newUserId = createNewUser.body.id
 
     return {createdUserAccessToken, newCommentId, newCommentContent, newCommentUserId,newCommentUserLogin, newCommentCreatedAt, newPostId,
-        newPostTitle, newPostShortDescription, newPostContent, newPostCreatedAt, newBlogId, newBlogName}
+        newPostTitle, newPostShortDescription, newPostContent, newPostCreatedAt, newBlogId, newBlogName,
+        newUserId, newUserLogin
+    }
 }
 
+
+export const createUser2_3_4 = async (): Promise<test2_3_4UsersTokensAndId> => {
+
+    const createNewUser2 = await createUser(secondLogin, newPassword, secondEmail, basicAuth)
+    expect(createNewUser2.status).toBe(201)
+
+    const loginMyUser2 = await authLogin(secondLogin, newPassword)
+    expect(loginMyUser2.status).toBe(200)
+
+    const createdUser2AccessToken = loginMyUser2.body.accessToken
+    const user2Id= createNewUser2.body.id
+
+
+    const createNewUser3 = await createUser(thirdLogin, thirdPassword, thirdEmail, basicAuth)
+    expect(createNewUser3.status).toBe(201)
+
+    const loginMyUser3 = await authLogin(thirdLogin, thirdPassword)
+    expect(loginMyUser3.status).toBe(200)
+
+    const createdUser3AccessToken = loginMyUser3.body.accessToken
+    const user3Id= createNewUser3.body.id
+
+
+    const createNewUser4 = await createUser(fourthLogin, fourthPassword, fourthEmail, basicAuth)
+    expect(createNewUser4.status).toBe(201)
+
+    const loginMyUser4 = await authLogin(fourthLogin, fourthPassword)
+    expect(loginMyUser4.status).toBe(200)
+
+    const createdUser4AccessToken = loginMyUser4.body.accessToken
+    const user4Id= createNewUser4.body.id
+
+
+
+    return {createdUser2AccessToken, createdUser3AccessToken, createdUser4AccessToken,
+        user2Id, user3Id, user4Id,
+    }
+}
 
 export const createUser2 = async (): Promise<testCreateAll> => {
 
@@ -509,8 +589,5 @@ export const createUser2 = async (): Promise<testCreateAll> => {
     const loginMyUser = await authLogin(secondLogin, newPassword)
     expect(loginMyUser.status).toBe(200)
 
-    const createdUser2AccessToken = loginMyUser.body.accessToken
-
-    return createdUser2AccessToken
+    return loginMyUser.body.accessToken
 }
-

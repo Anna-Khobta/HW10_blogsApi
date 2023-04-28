@@ -1,75 +1,63 @@
-import {postsRepositories} from "../repositories/posts-db-repositories";
-import {LikeStatusesEnum, PostTypeWithoutIds, PostViewType, UserLikeInfo, UserViewType} from "../repositories/db/types";
+import {PostsDbRepository} from "../repositories/posts-db-repository";
+import {LikeStatusesEnum, PostDbType, PostViewType, UserLikeInfo, UserViewType} from "../repositories/db/types";
 import {blogsQueryRepository} from "../repositories/blogs-query-repository";
-import {postsQueryRepositories} from "../repositories/posts-query-repositories";
+import {PostsQueryRepository} from "../repositories/posts-query-repository";
 import {PostModelClass} from "../repositories/db/db";
+import {injectable} from "inversify";
 
-
-export const postsService = {
+@injectable()
+export class PostsService {
+    constructor(protected postQueryRepository: PostsQueryRepository,
+                protected postsDbRepository: PostsDbRepository) {}
 
     async createPost(title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
 
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-        // TODO по идее надо квери вынести в роутер и сюда просто передать имя блога
-
         if (!foundBlogName) {
             return null
         }
 
-        let newPost: PostTypeWithoutIds = {
-            title: title,
-            shortDescription: shortDescription,
-            content: content,
-            blogId: blogId,
-            blogName: foundBlogName.name,
-            createdAt: (new Date()).toISOString(),
-        }
+        let newPost = new PostDbType (title, shortDescription, content, blogId, foundBlogName.name)
 
         const postInstance = new PostModelClass(newPost)
-        await postsRepositories.save(postInstance)
+        await this.postsDbRepository.save(postInstance)
 
         return postInstance._id.toString()
-    },
+    }
 
     async updatePost(postId: string, title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
 
-        let foundPostId = await postsQueryRepositories.findPostById(postId)
+        let foundPostId = await this.postQueryRepository.findPostById(postId)
         let foundBlogName = await blogsQueryRepository.findBlogName(blogId)
 
-        if (!foundPostId) {
-            return null
-        }
-        if (!foundBlogName) {
+        if (!foundPostId || !foundBlogName) {
             return null
         }
 
-        const updatedPostId = await postsRepositories.updatePost(postId, title, shortDescription, content)
-
-        console.log(updatedPostId)
+        const updatedPostId = await this.postsDbRepository.updatePost(postId, title, shortDescription, content)
 
         if (!updatedPostId) {
             return null
         }
 
         return updatedPostId
-    },
+    }
 
     async deletePost(id: string): Promise<boolean> {
-        return postsRepositories.deletePost(id)
-    },
+        return this.postsDbRepository.deletePost(id)
+    }
 
     async deleteAllPosts(): Promise<number> {
-        return postsRepositories.deleteAllPosts()
+        return this.postsDbRepository.deleteAllPosts()
 
-    },
+    }
 
     async createLikeStatus(userInfo: UserViewType, foundPost: PostViewType, postId: string, likeStatus: LikeStatusesEnum): Promise<boolean> {
 
-
-        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await postsQueryRepositories.checkUserLike(postId, userInfo.id)
+        const checkIfUserHaveAlreadyPutLike: LikeStatusesEnum | null = await this.postQueryRepository.checkUserLike(postId, userInfo.id)
 
         let userLikeInfo: UserLikeInfo = {
             userId: userInfo.id,
@@ -77,59 +65,59 @@ export const postsService = {
             userStatus: checkIfUserHaveAlreadyPutLike || likeStatus
         }
 
+        let likes = foundPost.extendedLikesInfo.likesCount
+        let dislikes = foundPost.extendedLikesInfo.dislikesCount
+
         //если пользователь ранее не лайкал вообще этот пост
         if (!checkIfUserHaveAlreadyPutLike) {
-            await postsRepositories.createUserLikeInfoInDb(postId, userLikeInfo, likeStatus)
-        }
+            return await this.postsDbRepository.createUserLikeInfoInDb(postId, userLikeInfo, likeStatus, likes, dislikes)
 
-        let likes = foundPost.likesCount
-        let dislikes = foundPost.dislikesCount
+        } else {
 
-        if (checkIfUserHaveAlreadyPutLike === likeStatus) return true
+            if (checkIfUserHaveAlreadyPutLike === likeStatus) return true
 
-        if (checkIfUserHaveAlreadyPutLike === "None") {
-            switch (likeStatus) {
-                case "Like":
-                    likes++;
-                    break;
-                case "Dislike":
-                    dislikes++;
-                    break;
-                default:
-                    break;
+            if (checkIfUserHaveAlreadyPutLike === "None") {
+                switch (likeStatus) {
+                    case "Like":
+                        likes++;
+                        break;
+                    case "Dislike":
+                        dislikes++;
+                        break;
+                    default:
+                        break;
+                }
+
             }
 
-        }
-
-
-        if (checkIfUserHaveAlreadyPutLike === "Like") {
-            switch (likeStatus) {
-                case "Dislike":
-                    likes--;
-                    dislikes++;
-                    break;
-                default:
-                    likes--;
-                    break;
+            if (checkIfUserHaveAlreadyPutLike === "Like") {
+                switch (likeStatus) {
+                    case "Dislike":
+                        likes--;
+                        dislikes++;
+                        break;
+                    default:
+                        likes--;
+                        break;
+                }
             }
-        }
 
-        if (checkIfUserHaveAlreadyPutLike === "Dislike") {
-            switch (likeStatus) {
-                case "Like":
-                    likes++;
-                    dislikes--;
-                    break;
-                default:
-                    dislikes--;
-                    break;
+            if (checkIfUserHaveAlreadyPutLike === "Dislike") {
+                switch (likeStatus) {
+                    case "Like":
+                        likes++;
+                        dislikes--;
+                        break;
+                    default:
+                        dislikes--;
+                        break;
+                }
             }
+
+            return await this.postsDbRepository.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes);
         }
-
-            const updatePost = await postsRepositories.updateUserLikeInfo(postId, userLikeInfo, likeStatus, likes, dislikes)
-
-            return updatePost;
-
-
     }
 }
+
+
+//export const postsService = new PostsService()

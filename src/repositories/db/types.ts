@@ -28,20 +28,14 @@ export type PostViewType = {
     blogId: string,
     blogName: string,
     createdAt: string,
-    likesCount: number,
-    dislikesCount: number,
-    myStatus: LikeStatusesEnum
-
+    extendedLikesInfo: {
+        likesCount: number,
+        dislikesCount: number,
+        myStatus: LikeStatusesEnum,
+        newestLikes: NewestLikesType[]
+    }
 }
 
-export type PostTypeWithoutIds = {
-    title: string,
-    shortDescription: string,
-    content: string,
-    blogId: string,
-    blogName: string,
-    createdAt: string,
-}
 
 export type PostsWithPagination = {
     pagesCount: number,
@@ -50,6 +44,7 @@ export type PostsWithPagination = {
     totalCount: number,
     items: PostViewType[]
 }
+/*
 
 export type PostDbType = {
     title: string,
@@ -61,9 +56,37 @@ export type PostDbType = {
     likesCount: number,
     dislikesCount: number,
     usersEngagement: UserLikeInfo[]
-
 }
 
+*/
+
+
+
+export class PostDbType {
+
+    createdAt: string
+    likesCount: number
+    dislikesCount: number
+    usersEngagement: UserLikeInfo[]
+
+    constructor(
+        public title: string,
+        public shortDescription: string,
+        public content: string,
+        public blogId: string,
+        public blogName: string) {
+
+        this.title = title;
+        this.shortDescription = shortDescription;
+        this.content = content;
+        this.blogId = blogId;
+        this.blogName = blogName;
+        this.createdAt = (new Date()).toISOString();
+        this.likesCount = 0;
+        this.dislikesCount = 0;
+        this.usersEngagement = []
+    }
+}
 
 export type CommentDBType = {
     //id: string,
@@ -84,6 +107,12 @@ export type UserLikeInfo = {
     userId: string,
     createdAt: string,
     userStatus: LikeStatusesEnum
+}
+
+export type NewestLikesType = {
+    addedAt: string,
+    userId: string,
+    login: string
 }
 
 
