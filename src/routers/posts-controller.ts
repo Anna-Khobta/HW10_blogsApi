@@ -4,14 +4,14 @@ import {Request, Response} from "express";
 import {getPagination} from "../functions/pagination";
 import {commentsService} from "../domain/comments-service";
 import {commentsQueryRepositories} from "../repositories/comments-query-repositories";
-import {injectable} from "inversify";
+import {inject, injectable} from "inversify";
 
 @injectable()
 export class PostsController {
 
     private postsQueryRepositories: PostsQueryRepository
 
-    constructor(protected postsService: PostsService) {
+    constructor(@inject(PostsService) protected postsService: PostsService) {
         this.postsQueryRepositories = new PostsQueryRepository()
     }
 

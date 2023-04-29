@@ -3,12 +3,12 @@ import {LikeStatusesEnum, PostDbType, PostViewType, UserLikeInfo, UserViewType} 
 import {blogsQueryRepository} from "../repositories/blogs-query-repository";
 import {PostsQueryRepository} from "../repositories/posts-query-repository";
 import {PostModelClass} from "../repositories/db/db";
-import {injectable} from "inversify";
+import {inject, injectable} from "inversify";
 
 @injectable()
 export class PostsService {
-    constructor(protected postQueryRepository: PostsQueryRepository,
-                protected postsDbRepository: PostsDbRepository) {}
+    constructor(@inject(PostsQueryRepository) protected postQueryRepository: PostsQueryRepository,
+                @inject(PostsDbRepository) protected postsDbRepository: PostsDbRepository) {}
 
     async createPost(title: string, shortDescription: string, content: string,
                      blogId: string): Promise<string | null> {
